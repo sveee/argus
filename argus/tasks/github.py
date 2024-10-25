@@ -97,5 +97,6 @@ class GithubSlackNotifier(SlackNotifier[Repos]):
         df['gain'] = df['n_recent_stars'] / df['n_stars']
         df = df.sort_values('gain', ascending=False)
         df['description'] = df.description.str.strip()
-        df = df.iloc[:10][['url', 'description', 'n_stars', 'n_recent_stars']]
+        df = df[['url', 'description', 'n_stars', 'n_recent_stars']]
+        df['description'] = df['description'].apply(lambda s: s[:75])
         return f'🐙 *Github Repos*\n```' + dataframe_to_str(df) + '```'
