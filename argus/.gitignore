@@ -1,0 +1,11 @@
+# Python cache files
+__pycache__/
+
+# Poetry dependency management
+poetry.lock
+
+# Scripts directory
+scripts/
+
+# Database files
+*.db

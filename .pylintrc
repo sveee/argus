@@ -1,0 +1,17 @@
+[MESSAGES CONTROL]
+
+disable=
+    W0107,  # unnecessary-pass
+    W0611,  # unused-import
+    W1309,  # f-string-without-interpolation
+    R0903,  # too-few-public-methods
+    C0114,  # missing-function-docstring
+    C0115,  # missing-function-docstring
+    C0116,  # missing-function-docstring
+    C0115,  # missing-class-docstring
+
+enable=
+    W3101,  # missing-timeout
+    W1203,  # logging-fstring-interpolation
+    R0913,  # too-many-arguments
+    W1401   # anomalous-backslash-in-string
