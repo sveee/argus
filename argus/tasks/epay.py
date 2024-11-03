@@ -7,7 +7,7 @@ import pandas as pd
 from playwright.sync_api import expect, sync_playwright
 
 from argus.tasks.base.data import JsonSerializable, JsonType
-from argus.tasks.base.format_utils import dataframe_to_markdown, dataframe_to_str
+from argus.tasks.base.format_utils import dataframe_to_str
 from argus.tasks.base.notifier import SlackNotifier, TelegamNotifier
 from argus.tasks.base.task import ChangeDetectingTask
 
