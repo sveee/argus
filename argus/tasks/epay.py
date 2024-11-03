@@ -7,8 +7,8 @@ import pandas as pd
 from playwright.sync_api import expect, sync_playwright
 
 from argus.tasks.base.data import JsonSerializable, JsonType
-from argus.tasks.base.format_utils import dataframe_to_str
-from argus.tasks.base.notifier import SlackNotifier
+from argus.tasks.base.format_utils import dataframe_to_markdown, dataframe_to_str
+from argus.tasks.base.notifier import SlackNotifier, TelegamNotifier
 from argus.tasks.base.task import ChangeDetectingTask
 
 
@@ -53,10 +53,19 @@ class EPayTask(ChangeDetectingTask[Bills]):
         return Bills(sorted(entries, key=lambda x: x.name))
 
 
+def _prepare_data(data: Bills) -> pd.DataFrame:
+    df = pd.DataFrame(data.to_json_data())
+    df = pd.concat(
+        [df, pd.DataFrame([{"name": 'Total', "amount": df.amount.sum()}])]
+    ).reset_index(drop=True)
+    return f'💸 *Bills* 💸\n```\n' + dataframe_to_str(df) + '\n```'
+
+
 class EPaySlackNotifier(SlackNotifier[Bills]):
     def format(self, data: Bills) -> str:
-        df = pd.DataFrame(data.to_json_data())
-        df = pd.concat(
-            [df, pd.DataFrame([{"name": 'Total', "amount": df.amount.sum()}])]
-        ).reset_index(drop=True)
-        return f'💸 *Bills* 💸\n```' + dataframe_to_str(df) + '```'
+        return _prepare_data(data)
+
+
+class EPayTelegramNotifier(TelegamNotifier[Bills]):
+    def format(self, data: Bills) -> str:
+        return _prepare_data(data)

@@ -4,7 +4,7 @@ from typing import Any, List
 
 from argus.tasks.base.data import JsonSerializable, JsonType
 from argus.tasks.base.format_utils import dataframe_to_str
-from argus.tasks.base.notifier import Notifier, SlackNotifier
+from argus.tasks.base.notifier import Notifier, SlackNotifier, TelegamNotifier
 from argus.tasks.base.scheduler import Frequency, Scheduler
 from argus.tasks.base.task import Task
 
@@ -45,3 +45,8 @@ class TodoTask(Task[Todo]):
 class TodoSlackNotifier(SlackNotifier[Todo]):
     def format(self, data: Todo) -> str:
         return f'📝 {data.title}, {data.date}'
+
+
+class TodoTelegramNotifier(TelegamNotifier[Todo]):
+    def format(self, data: Todo) -> str:
+        return '📝 *TODO*\n' f'*Task:* {data.title}\n' f'*Date:* {data.date}'
