@@ -6,7 +6,7 @@ from typing import Generic, List, Optional
 
 from argus.tasks.base.data import JsonType, T
 from argus.tasks.base.database import TaskResult, db
-from argus.tasks.base.notifier import Notifier
+from argus.tasks.base.notifier import FormattedNotifier
 from argus.tasks.base.scheduler import Scheduler
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ class Task(ABC, Generic[T]):
     def __init__(
         self,
         scheduler: Optional[Scheduler] = None,
-        notifier: Optional[Notifier] = None,
+        notifier: Optional[FormattedNotifier] = None,
         store_to_db: bool = True,
     ) -> None:
         self._scheduler = scheduler if scheduler else None
@@ -46,8 +46,8 @@ class Task(ABC, Generic[T]):
             if self._store_to_db:
                 self.save_result(result)
             if self._notifier:
-                self._notifier.notify_formatted(result)
-            logger.info(f'%s finished. Next run time: %s', self._name, self._scheduler)
+                self._notifier.notify(result)
+            logger.info('%s finished. Next run time: %s', self._name, self._scheduler)
 
     def __repr__(self) -> str:
         return f'{self._name}[{self._scheduler}]'
@@ -66,19 +66,19 @@ class ChangeDetectingTask(Task[T], ABC):
 
     def run_if_due(self) -> None:
         if not self._scheduler or self._scheduler.is_due():
-            logger.info(f'%s running', self._name)
+            logger.info('%s running', self._name)
             current_result = self.run()
             get_previous_result_json = self.get_previous_result_json()
             has_change = get_previous_result_json != current_result.to_json_data()
             if has_change:
                 self.save_result(current_result)
                 if self._notifier:
-                    self._notifier.notify_formatted(current_result)
-                logger.info(f'%s detected changes and saved results', self._name)
+                    self._notifier.notify(current_result)
+                logger.info('%s detected changes and saved results', self._name)
             else:
-                logger.info(f'%s no changes detected', self._name)
+                logger.info('%s no changes detected', self._name)
 
-            logger.info(f'%s finished. Next run time: %s', self._name, self._scheduler)
+            logger.info('%s finished. Next run time: %s', self._name, self._scheduler)
 
 
 class TaskManager:
@@ -88,7 +88,7 @@ class TaskManager:
         self._running = True
 
     def run(self):
-        logger.info(f'Tasks: %s', self._tasks)
+        logger.info('Tasks: %s', self._tasks)
         while self._running:
             for task in self._tasks:
                 task.run_if_due()

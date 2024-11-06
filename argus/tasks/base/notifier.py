@@ -11,23 +11,37 @@ from argus.tasks.base.data import T
 logger = logging.getLogger(__name__)
 
 
-class Notifier(ABC, Generic[T]):
+class MessageFormatter(ABC, Generic[T]):
     @abstractmethod
     def format(self, data: T) -> str:
         """Format the data into a notification message."""
         pass
 
+
+class Notifier:
     @abstractmethod
     def notify(self, text: str) -> None:
         """Send a notification with the provided message."""
         pass
 
-    def notify_formatted(self, data: T) -> None:
-        """Format the data and send the notification."""
-        self.notify(self.format(data))
+
+class FormattedNotifier:
+    """
+    A service that combines a notifier with a formatter to handle the complete
+    notification workflow for a specific type of data.
+    """
+
+    def __init__(self, notifier: Notifier, formatter: MessageFormatter) -> None:
+        self._notifier = notifier
+        self._formatter = formatter
+
+    def notify(self, data: T) -> None:
+        """Format the data and send the notification using the configured notifier."""
+        formatted_message = self._formatter.format(data)
+        self._notifier.notify(formatted_message)
 
 
-class SlackNotifier(Notifier[T]):
+class SlackNotifier:
     SLACK_MESSAGE_MAX_LENGTH = 4000
 
     def __init__(self, slack_hooks: List[str]) -> None:
@@ -43,7 +57,7 @@ class SlackNotifier(Notifier[T]):
         requests.post(webhook, json=payload, timeout=300)
 
     def notify(self, text: str) -> None:
-        logger.info(f'Slack message size: %s', len(text))
+        logger.info('Slack message size: %s', len(text))
         if len(text) >= self.SLACK_MESSAGE_MAX_LENGTH:
             raise ValueError(
                 f"Message exceeds Slack limit of {self.SLACK_MESSAGE_MAX_LENGTH} characters."
@@ -52,7 +66,7 @@ class SlackNotifier(Notifier[T]):
             self.post(text, slack_hook)
 
 
-class TelegamNotifier(Notifier[T]):
+class TelegamNotifier:
 
     def __init__(self, bot_token: str, chat_ids: list[str]) -> None:
         self._telegram_bot = Bot(token=bot_token)
@@ -66,6 +80,6 @@ class TelegamNotifier(Notifier[T]):
 
         for chat_id in self._chat_ids:
             logger.info(
-                f'Telegram message with length %d sent to chat %s', len(text), chat_id
+                'Telegram message with length %d sent to chat %s', len(text), chat_id
             )
             asyncio.run(async_send_message(chat_id))

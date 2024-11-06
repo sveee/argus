@@ -1,7 +1,5 @@
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Type
 
 import pandas as pd
 import requests
@@ -9,7 +7,7 @@ from bs4 import BeautifulSoup
 
 from argus.tasks.base.data import JsonSerializable, JsonType
 from argus.tasks.base.format_utils import dataframe_to_str
-from argus.tasks.base.notifier import Notifier, SlackNotifier
+from argus.tasks.base.notifier import MessageFormatter
 from argus.tasks.base.task import Task
 
 
@@ -33,7 +31,7 @@ class RepoLanguage(Enum):
     JUPYTER = 'Jupyter Notebook'
 
 
-class Repos(List[Repo], JsonSerializable):
+class Repos(list[Repo], JsonSerializable):
     def to_json_data(self) -> JsonType:
         return [asdict(repo) for repo in self]
 
@@ -45,7 +43,7 @@ class TrendingGithubRepos(Task[Repos]):
     def __init__(
         self,
         date_range: RepoDateRange = RepoDateRange.WEEKLY,
-        languages: List[RepoLanguage] | None = None,
+        languages: list[RepoLanguage] | None = None,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
@@ -89,7 +87,7 @@ class TrendingGithubRepos(Task[Repos]):
         return Repos(repos)
 
 
-class GithubSlackNotifier(SlackNotifier[Repos]):
+class GithubSlackFormatter(MessageFormatter[Repos]):
     TOP_K = 10
 
     def format(self, data: Repos) -> str:
@@ -99,4 +97,4 @@ class GithubSlackNotifier(SlackNotifier[Repos]):
         df['description'] = df.description.str.strip()
         df = df[['url', 'description', 'n_stars', 'n_recent_stars']]
         df['description'] = df['description'].apply(lambda s: s[:75])
-        return f'🐙 *Github Repos*\n```' + dataframe_to_str(df) + '```'
+        return '🐙 *Github Repos*\n```' + dataframe_to_str(df) + '```'

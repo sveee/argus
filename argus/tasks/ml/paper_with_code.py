@@ -1,5 +1,4 @@
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, List
 
 import pandas as pd
 import requests
@@ -7,7 +6,7 @@ from bs4 import BeautifulSoup
 
 from argus.tasks.base.data import JsonSerializable, JsonType
 from argus.tasks.base.format_utils import dataframe_to_str
-from argus.tasks.base.notifier import SlackNotifier
+from argus.tasks.base.notifier import MessageFormatter
 from argus.tasks.base.task import Task
 
 
@@ -19,12 +18,12 @@ class Paper:
     url: str
 
 
-class Papers(List[Paper], JsonSerializable):
+class Papers(list[Paper], JsonSerializable):
     def to_json_data(self) -> JsonType:
         return [asdict(paper) for paper in self]
 
 
-class TrendingPapersWithCode(Task[Papers]):
+class TrendingPapersWithCodeTask(Task[Papers]):
 
     LIMIT = 10
 
@@ -54,11 +53,11 @@ class TrendingPapersWithCode(Task[Papers]):
         )
 
 
-class PapersWithCodeSlackNotifier(SlackNotifier[Papers]):
+class PapersWithCodeSlackFormatter(MessageFormatter[Papers]):
     TOP_K = 10
 
     def format(self, data: Papers) -> str:
         df = pd.DataFrame(data.to_json_data())
         df = df.sort_values('stars', ascending=False)
         df = df.iloc[: self.TOP_K]
-        return f'📝 *PaperWithCode Trending Papers*\n```' + dataframe_to_str(df) + '```'
+        return '📝 *PaperWithCode Trending Papers*\n```' + dataframe_to_str(df) + '```'

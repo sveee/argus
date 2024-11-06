@@ -1,6 +1,5 @@
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Type
 
 import pandas as pd
 import requests
@@ -8,7 +7,7 @@ from bs4 import BeautifulSoup
 
 from argus.tasks.base.data import JsonSerializable, JsonType
 from argus.tasks.base.format_utils import dataframe_to_str
-from argus.tasks.base.notifier import SlackNotifier
+from argus.tasks.base.notifier import MessageFormatter
 from argus.tasks.base.task import Task
 
 
@@ -19,12 +18,12 @@ class ModelInfo:
     n_downloads: int
 
 
-class TrendingModelsData(List[ModelInfo], JsonSerializable):
+class TrendingModelsData(list[ModelInfo], JsonSerializable):
     def to_json_data(self) -> JsonType:
         return [asdict(model_info) for model_info in self]
 
 
-class HuggingFaceTrendingModels(Task[TrendingModelsData]):
+class HuggingFaceTrendingModelsTask(Task[TrendingModelsData]):
 
     LIMIT = 10
 
@@ -45,7 +44,7 @@ class HuggingFaceTrendingModels(Task[TrendingModelsData]):
         )
 
 
-class HuggingFaceModelNotifier(SlackNotifier[TrendingModelsData]):
+class HuggingFaceModelFormatter(MessageFormatter[TrendingModelsData]):
     TOP_K = 10
 
     def format(self, data: TrendingModelsData) -> str:
@@ -53,7 +52,7 @@ class HuggingFaceModelNotifier(SlackNotifier[TrendingModelsData]):
         df = df.sort_values('n_likes', ascending=False)
         df['model_id'] = 'https://huggingface.co/' + df['model_id'].str.lstrip('/')
         df = df.iloc[: self.TOP_K]
-        return f'🤗 *HuggingFace Trending Models*\n```' + dataframe_to_str(df) + '```'
+        return '🤗 *HuggingFace Trending Models*\n```' + dataframe_to_str(df) + '```'
 
 
 @dataclass(frozen=True, order=True)
@@ -63,12 +62,12 @@ class Paper:
     n_likes: int
 
 
-class Papers(List[Paper], JsonSerializable):
+class Papers(list[Paper], JsonSerializable):
     def to_json_data(self) -> JsonType:
         return [asdict(paper) for paper in self]
 
 
-class HuggingFaceTrendingPapers(Task[Papers]):
+class HuggingFaceTrendingPapersTask(Task[Papers]):
 
     LIMIT = 10
     LAST_N_DAYS = 7
@@ -96,7 +95,7 @@ class HuggingFaceTrendingPapers(Task[Papers]):
         return Papers(sorted(set(papers)))
 
 
-class HuggingFacePapersNotifier(SlackNotifier[Papers]):
+class HuggingFacePapersFormatter(MessageFormatter[Papers]):
     TOP_K = 10
 
     def format(self, data: Papers) -> str:
@@ -104,4 +103,4 @@ class HuggingFacePapersNotifier(SlackNotifier[Papers]):
         df = df.sort_values('n_likes', ascending=False)
         df['url'] = 'https://huggingface.co/' + df['url'].str.lstrip('/')
         df = df.iloc[: self.TOP_K]
-        return f'🤗 *HuggingFace Trending Papers*\n```' + dataframe_to_str(df) + '```'
+        return '🤗 *HuggingFace Trending Papers*\n```' + dataframe_to_str(df) + '```'

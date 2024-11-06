@@ -1,14 +1,13 @@
 import os
 import re
 from dataclasses import asdict, dataclass
-from typing import Any, List
 
 import pandas as pd
-from playwright.sync_api import expect, sync_playwright
+from playwright.sync_api import sync_playwright
 
 from argus.tasks.base.data import JsonSerializable, JsonType
 from argus.tasks.base.format_utils import dataframe_to_str
-from argus.tasks.base.notifier import SlackNotifier, TelegamNotifier
+from argus.tasks.base.notifier import MessageFormatter
 from argus.tasks.base.task import ChangeDetectingTask
 
 
@@ -18,7 +17,7 @@ class BillEntry:
     amount: float
 
 
-class Bills(List[BillEntry], JsonSerializable):
+class Bills(list[BillEntry], JsonSerializable):
     def to_json_data(self) -> JsonType:
         return [asdict(entry) for entry in self]
 
@@ -58,14 +57,9 @@ def _prepare_data(data: Bills) -> pd.DataFrame:
     df = pd.concat(
         [df, pd.DataFrame([{"name": 'Total', "amount": df.amount.sum()}])]
     ).reset_index(drop=True)
-    return f'💸 *Bills* 💸\n```\n' + dataframe_to_str(df) + '\n```'
+    return '💸 *Bills* 💸\n```\n' + dataframe_to_str(df) + '\n```'
 
 
-class EPaySlackNotifier(SlackNotifier[Bills]):
-    def format(self, data: Bills) -> str:
-        return _prepare_data(data)
-
-
-class EPayTelegramNotifier(TelegamNotifier[Bills]):
+class EPayFormatter(MessageFormatter[Bills]):
     def format(self, data: Bills) -> str:
         return _prepare_data(data)

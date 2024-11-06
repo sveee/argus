@@ -2,8 +2,6 @@
 
 disable=
     W0107,  # unnecessary-pass
-    W0611,  # unused-import
-    W1309,  # f-string-without-interpolation
     R0903,  # too-few-public-methods
     C0114,  # missing-function-docstring
     C0115,  # missing-function-docstring
