@@ -32,22 +32,30 @@ class Scheduler:
         timezone: str = 'Europe/Sofia',
     ) -> None:
         self._timezone = timezone
+        self._frequency = frequency
         self._delta = FREQ_TO_DELTA[frequency]
         self._next_date = (
             start_date.replace(tzinfo=ZoneInfo(self._timezone))
             if start_date
             else self._now()
         ).replace(second=0, microsecond=0)
+        self._stopped = False
         assert self._next_date >= self._now()
 
     def _now(self) -> datetime:
         return datetime.now(ZoneInfo(self._timezone))
 
     def is_due(self) -> bool:
-        if self._now() < self._next_date:
+        if self._stopped or self._now() < self._next_date:
             return False
+        if self._frequency == Frequency.ONCE:
+            self._stopped = True
         self._next_date += self._delta
         return True
 
     def __repr__(self) -> str:
-        return self._next_date.strftime('%Y-%m-%d %H:%M:%S')
+        return (
+            self._next_date.strftime('%Y-%m-%d %H:%M:%S')
+            if not self._stopped
+            else str(None)
+        )

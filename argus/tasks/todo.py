@@ -36,7 +36,7 @@ class TodoTask(Task[Todo]):
     def run(self) -> Todo:
         return Todo(
             self._title,
-            self._target_date.strftime('%-d %B %H:%M'),
+            self._target_date.strftime('%-d %b %H:%M'),
         )
 
 
