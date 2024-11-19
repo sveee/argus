@@ -25,7 +25,7 @@ class TodoTask(Task[Todo]):
         remind_in: list[timedelta] | None = None,
         notifier: FormattedNotifier | None = None,
     ) -> None:
-        remind_in = sorted(remind_in if remind_in else [timedelta(0)], reverse=True)
+        remind_in = sorted(remind_in if remind_in else [timedelta()], reverse=True)
         super().__init__(
             Scheduler(
                 [target_date - delta for delta in remind_in],

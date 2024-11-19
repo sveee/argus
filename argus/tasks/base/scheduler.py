@@ -78,7 +78,6 @@ class Scheduler:
         if self._config.adjust_to_current_time:
             while self.next_runtime is not None and self.next_runtime < self.now():
                 self.set_next_runtime()
-            assert self.next_runtime is not None
 
     def now(self) -> datetime:
         return datetime.now(ZoneInfo(self._config.timezone))
