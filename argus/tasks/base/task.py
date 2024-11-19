@@ -47,6 +47,8 @@ class Task(ABC, Generic[T]):
                 self.save_result(result)
             if self._notifier:
                 self._notifier.notify(result)
+            if self._scheduler:
+                self._scheduler.set_next_runtime()
             logger.info('%s finished. Next run time: %s', self._name, self._scheduler)
 
     def __repr__(self) -> str:

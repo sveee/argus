@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from argus.tasks.base.data import JsonSerializable, JsonType
 from argus.tasks.base.notifier import FormattedNotifier, MessageFormatter
-from argus.tasks.base.scheduler import Frequency, Scheduler
+from argus.tasks.base.scheduler import Frequency, Scheduler, SchedulerConfig
 from argus.tasks.base.task import Task
 
 
@@ -22,11 +22,15 @@ class TodoTask(Task[Todo]):
         self,
         target_date: datetime,
         title: str,
-        remind_in: timedelta = timedelta(days=14),
+        remind_in: list[timedelta] | None = None,
         notifier: FormattedNotifier | None = None,
     ) -> None:
+        remind_in = sorted(remind_in if remind_in else [timedelta(0)], reverse=True)
         super().__init__(
-            Scheduler(target_date - remind_in, Frequency.ONCE),
+            Scheduler(
+                [target_date - delta for delta in remind_in],
+                SchedulerConfig(frequency=Frequency.LIST),
+            ),
             notifier,
             store_to_db=False,
         )

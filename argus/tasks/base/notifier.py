@@ -1,4 +1,4 @@
-import asyncio
+
 import logging
 from abc import ABC, abstractmethod
 from typing import Generic, List
@@ -73,13 +73,10 @@ class TelegamNotifier:
         self._chat_ids = chat_ids
 
     def notify(self, text: str) -> None:
-        async def async_send_message(chat_id: str) -> None:
-            await self._telegram_bot.send_message(
-                chat_id=chat_id, text=text, parse_mode='MarkdownV2'
-            )
-
         for chat_id in self._chat_ids:
             logger.info(
                 'Telegram message with length %d sent to chat %s', len(text), chat_id
             )
-            asyncio.run(async_send_message(chat_id))
+            self._telegram_bot.send_message(
+                chat_id=chat_id, text=text, parse_mode='MarkdownV2'
+            )
