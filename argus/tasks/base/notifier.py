@@ -1,4 +1,3 @@
-
 import logging
 from abc import ABC, abstractmethod
 from typing import Generic, List
@@ -72,11 +71,11 @@ class TelegamNotifier:
         self._telegram_bot = Bot(token=bot_token)
         self._chat_ids = chat_ids
 
-    def notify(self, text: str) -> None:
+    async def notify(self, text: str) -> None:
         for chat_id in self._chat_ids:
             logger.info(
                 'Telegram message with length %d sent to chat %s', len(text), chat_id
             )
-            self._telegram_bot.send_message(
+            await self._telegram_bot.send_message(
                 chat_id=chat_id, text=text, parse_mode='MarkdownV2'
             )

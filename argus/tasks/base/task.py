@@ -26,27 +26,34 @@ class Task(ABC, Generic[T]):
 
     @abstractmethod
     def run(self) -> T:
+        """Runs the task and returns the result."""
         pass
 
     def save_result(self, result: T) -> None:
-        """
-        Stores the result in the database if db_connector is provided.
-        The result is stored as a JSON string by calling to_json_data.
-        """
+        """Stores the result in the database."""
         with db:
             serialized_result = json.dumps(result.to_json_data())
             TaskResult.create(
                 task_name=self.__class__.__name__, result=serialized_result
             )
 
+    def notify_result(self, result: T) -> None:
+        """Notifies using the notifier if available."""
+        if self._notifier:
+            self._notifier.notify(result)
+
+    def on_run_completed(self, result: T) -> None:
+        """Handles result storage and notifications."""
+        if self._store_to_db:
+            self.save_result(result)
+        self.notify_result(result)
+
     def run_if_due(self) -> None:
+        """Runs the task if it is due, handles scheduling, storing, and notifying."""
         if not self._scheduler or self._scheduler.is_due():
             logger.info('%s running', self._name)
             result = self.run()
-            if self._store_to_db:
-                self.save_result(result)
-            if self._notifier:
-                self._notifier.notify(result)
+            self.on_run_completed(result)
             if self._scheduler:
                 self._scheduler.set_next_runtime()
             logger.info('%s finished. Next run time: %s', self._name, self._scheduler)
@@ -57,6 +64,7 @@ class Task(ABC, Generic[T]):
 
 class ChangeDetectingTask(Task[T], ABC):
     def get_previous_result_json(self) -> JsonType | None:
+        """Fetches the previous result from the database."""
         with db:
             previous_entry = (
                 TaskResult.select()
@@ -66,21 +74,20 @@ class ChangeDetectingTask(Task[T], ABC):
             )
         return json.loads(previous_entry.result) if previous_entry else None
 
-    def run_if_due(self) -> None:
-        if not self._scheduler or self._scheduler.is_due():
-            logger.info('%s running', self._name)
-            current_result = self.run()
-            get_previous_result_json = self.get_previous_result_json()
-            has_change = get_previous_result_json != current_result.to_json_data()
-            if has_change:
-                self.save_result(current_result)
-                if self._notifier:
-                    self._notifier.notify(current_result)
-                logger.info('%s detected changes and saved results', self._name)
-            else:
-                logger.info('%s no changes detected', self._name)
+    def has_changes(self, current_result: T) -> bool:
+        """Compares the current result with the previous result."""
+        previous_result_json = self.get_previous_result_json()
+        return previous_result_json != current_result.to_json_data()
 
-            logger.info('%s finished. Next run time: %s', self._name, self._scheduler)
+    def on_run_completed(self, result: T) -> None:
+        """Saves and notifies only if changes are detected."""
+        if self.has_changes(result):
+            logger.info('%s detected changes and saved results', self._name)
+            self.notify_result(result)
+            if self._store_to_db:
+                self.save_result(result)
+        else:
+            logger.info('%s no changes detected', self._name)
 
 
 class TaskManager:
