@@ -25,6 +25,7 @@ class TodoTask(Task[Todo]):
         remind_in: list[timedelta] | None = None,
         notifier: FormattedNotifier | None = None,
     ) -> None:
+        target_date = target_date.replace(hour=9, minute=0)
         remind_in = sorted(remind_in if remind_in else [timedelta()], reverse=True)
         super().__init__(
             Scheduler(
