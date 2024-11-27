@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from abc import ABC, abstractmethod
 from typing import Generic, List
@@ -40,7 +41,7 @@ class FormattedNotifier:
         self._notifier.notify(formatted_message)
 
 
-class SlackNotifier:
+class SlackNotifier(Notifier):
     SLACK_MESSAGE_MAX_LENGTH = 4000
 
     def __init__(self, slack_hooks: List[str]) -> None:
@@ -65,17 +66,19 @@ class SlackNotifier:
             self.post(text, slack_hook)
 
 
-class TelegamNotifier:
+class TelegamNotifier(Notifier):
 
     def __init__(self, bot_token: str, chat_ids: list[str]) -> None:
         self._telegram_bot = Bot(token=bot_token)
         self._chat_ids = chat_ids
 
-    async def notify(self, text: str) -> None:
+    def notify(self, text: str) -> None:
         for chat_id in self._chat_ids:
             logger.info(
                 'Telegram message with length %d sent to chat %s', len(text), chat_id
             )
-            await self._telegram_bot.send_message(
-                chat_id=chat_id, text=text, parse_mode='MarkdownV2'
+            asyncio.run(
+                self._telegram_bot.send_message(
+                    chat_id=chat_id, text=text, parse_mode='MarkdownV2'
+                )
             )
