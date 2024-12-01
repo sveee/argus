@@ -2,7 +2,6 @@ import json
 import logging
 import time
 from abc import ABC, abstractmethod
-from datetime import datetime
 from typing import Generic, List, Optional
 
 from argus.tasks.base.data import JsonType, T
@@ -49,24 +48,15 @@ class Task(ABC, Generic[T]):
             self.save_result(result)
         self.notify_result(result)
 
-    def run_if_due(self) -> bool:
+    def run_if_due(self) -> None:
         """Runs the task if it is due, handles scheduling, storing, and notifying."""
-        did_run = False
         if not self._scheduler or self._scheduler.is_due():
             logger.info('%s running', self._name)
             result = self.run()
             self.on_run_completed(result)
             if self._scheduler:
                 self._scheduler.set_next_runtime()
-            logger.info('%s finished', self._name)
-            did_run = True
-        return did_run
-
-    @property
-    def next_runtime(self) -> datetime | None:
-        if not self._scheduler:
-            return None
-        return self._scheduler.next_runtime
+            logger.info('%s finished. Next run time: %s', self._name, self._scheduler)
 
     def __repr__(self) -> str:
         return f'{self._name}[{self._scheduler}]'
@@ -106,20 +96,9 @@ class TaskManager:
         self._run_delay = run_delay
         self._running = True
 
-    def _log_next_task_to_run(self) -> None:
-        next_task_to_run = min(
-            self._tasks,
-            key=lambda t: (
-                t.next_runtime.replace(tzinfo=None) if t.next_runtime else datetime.max
-            ),
-        )
-        logger.info('Next task to run: %s', next_task_to_run)
-
     def run(self):
         logger.info('Tasks: %s', self._tasks)
-        self._log_next_task_to_run()
         while self._running:
             for task in self._tasks:
-                if task.run_if_due():
-                    self._log_next_task_to_run()
+                task.run_if_due()
             time.sleep(self._run_delay)
