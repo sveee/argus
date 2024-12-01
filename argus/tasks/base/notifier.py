@@ -71,14 +71,16 @@ class TelegamNotifier(Notifier):
     def __init__(self, bot_token: str, chat_ids: list[str]) -> None:
         self._telegram_bot = Bot(token=bot_token)
         self._chat_ids = chat_ids
+        self._loop = asyncio.new_event_loop()
 
-    def notify(self, text: str) -> None:
+    async def send_messages(self, text: str) -> None:
         for chat_id in self._chat_ids:
             logger.info(
                 'Telegram message with length %d sent to chat %s', len(text), chat_id
             )
-            asyncio.run(
-                self._telegram_bot.send_message(
-                    chat_id=chat_id, text=text, parse_mode='MarkdownV2'
-                )
+            await self._telegram_bot.send_message(
+                chat_id=chat_id, text=text, parse_mode='MarkdownV2'
             )
+
+    def notify(self, text: str) -> None:
+        self._loop.run_until_complete(self.send_messages(text))
