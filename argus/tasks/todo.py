@@ -10,7 +10,7 @@ from argus.tasks.base.task import Task
 @dataclass(frozen=True)
 class Todo(JsonSerializable):
     title: str
-    date: str
+    date: datetime
 
     def to_json_data(self) -> JsonType:
         return asdict(self)
@@ -41,10 +41,16 @@ class TodoTask(Task[Todo]):
     def run(self) -> Todo:
         return Todo(
             self._title,
-            self._target_date.strftime('%-d %b %H:%M'),
+            self._target_date,
         )
 
 
 class TodoFormatter(MessageFormatter[Todo]):
     def format(self, data: Todo) -> str:
-        return '📝 *TODO*\n' f'*Task:* {data.title}\n' f'*Date:* {data.date}'
+        remaining_days = (datetime.now() - data.date).days
+        when_message = (
+            'today'
+            if remaining_days == 0
+            else '1 day' if remaining_days == 1 else f'{remaining_days} days'
+        )
+        return f'✅ *TODO ({when_message})*\n{data.title}'

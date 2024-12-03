@@ -2,7 +2,7 @@ import json
 import logging
 import time
 from abc import ABC, abstractmethod
-from typing import Generic, List, Optional
+from typing import Generic, Optional
 
 from argus.tasks.base.data import JsonType, T
 from argus.tasks.base.database import TaskResult, db
@@ -31,11 +31,8 @@ class Task(ABC, Generic[T]):
 
     def save_result(self, result: T) -> None:
         """Stores the result in the database."""
-        with db:
-            serialized_result = json.dumps(result.to_json_data())
-            TaskResult.create(
-                task_name=self.__class__.__name__, result=serialized_result
-            )
+        serialized_result = json.dumps(result.to_json_data())
+        TaskResult.create(task_name=self._name, result=serialized_result)
 
     def notify_result(self, result: T) -> None:
         """Notifies using the notifier if available."""
@@ -91,7 +88,7 @@ class ChangeDetectingTask(Task[T], ABC):
 
 
 class TaskManager:
-    def __init__(self, tasks: List[Task], run_delay: int = 30) -> None:
+    def __init__(self, tasks: list[Task], run_delay: int = 30) -> None:
         self._tasks = tasks
         self._run_delay = run_delay
         self._running = True
