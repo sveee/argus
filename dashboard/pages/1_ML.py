@@ -24,7 +24,7 @@ if __name__ == '__main__':
     HUGGING_FACE_DOMAIN = 'https://huggingface.co/'
 
     st.caption('Hugging Face Models')
-    models = get_values('HuggingFaceTrendingModels').sort_values(
+    models = get_values('HuggingFaceTrendingModelsTask').sort_values(
         'n_likes', ascending=False
     )
     models['model_id'] = models.apply(
@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
     st.caption('Hugging Face Papers')
     papers = (
-        get_values('HuggingFaceTrendingPapers')
+        get_values('HuggingFaceTrendingPapersTask')
         .sort_values('n_likes', ascending=False)
         .iloc[:10]
     )
@@ -48,7 +48,7 @@ if __name__ == '__main__':
 
     st.caption('Papers With Code')
     papers = (
-        get_values('TrendingPapersWithCode')
+        get_values('TrendingPapersWithCodeTask')
         .sort_values('stars_per_hour', ascending=False)
         .iloc[:10]
     )
