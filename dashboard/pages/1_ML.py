@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 import pandas as pd
 import streamlit as st
@@ -6,7 +7,7 @@ import streamlit as st
 from argus.tasks.base.database import TaskResult, db
 
 
-def get_values(task_name: str) -> pd.DataFrame:
+def get_values(task_name: str) -> tuple[pd.DataFrame, datetime]:
     with db:
         latest_task = (
             TaskResult.select()
@@ -15,53 +16,45 @@ def get_values(task_name: str) -> pd.DataFrame:
             .first()
         )
 
-    return pd.DataFrame(json.loads(latest_task.result))
+    return pd.DataFrame(json.loads(latest_task.result)), latest_task.created_at[:11]
 
 
 if __name__ == '__main__':
     st.set_page_config(layout='wide')
 
+    st.header('ML Overview')
     HUGGING_FACE_DOMAIN = 'https://huggingface.co/'
 
-    st.caption('Hugging Face Models')
-    models = get_values('HuggingFaceTrendingModelsTask').sort_values(
-        'n_likes', ascending=False
-    )
+    models, date = get_values('HuggingFaceTrendingModelsTask')
+    models = models.sort_values('n_likes', ascending=False)
     models['model_id'] = models.apply(
         lambda row: f'<a href="{HUGGING_FACE_DOMAIN + row["model_id"]}">{row["model_id"]}</a>',
         axis=1,
     )
+    st.caption(f'[{date}] Hugging Face Models')
     st.write(models.to_html(escape=False, index=False), unsafe_allow_html=True)
 
-    st.caption('Hugging Face Papers')
-    papers = (
-        get_values('HuggingFaceTrendingPapersTask')
-        .sort_values('n_likes', ascending=False)
-        .iloc[:10]
-    )
+    papers, date = get_values('HuggingFaceTrendingPapersTask')
+    papers = papers.sort_values('n_likes', ascending=False).iloc[:10]
     papers['title'] = papers.apply(
         lambda row: f'<a href="{HUGGING_FACE_DOMAIN + row["url"][1:]}">{row["title"]}</a>',
         axis=1,
     )
     papers.drop(columns=['url'], inplace=True)
+    st.caption(f'[{date}] Hugging Face Papers')
     st.write(papers.to_html(escape=False, index=False), unsafe_allow_html=True)
 
-    st.caption('Papers With Code')
-    papers = (
-        get_values('TrendingPapersWithCodeTask')
-        .sort_values('stars_per_hour', ascending=False)
-        .iloc[:10]
-    )
+    papers, date = get_values('TrendingPapersWithCodeTask')
+    papers = papers.sort_values('stars_per_hour', ascending=False).iloc[:10]
     papers['title'] = papers.apply(
         lambda row: f'<a href="{row["url"]}">{row["title"]}</a>', axis=1
     )
     papers.drop(columns=['url'], inplace=True)
+    st.caption(f'[{date}] Papers With Code')
     st.write(papers.to_html(escape=False, index=False), unsafe_allow_html=True)
 
-    st.caption('Github Repos')
-    repos = get_values('TrendingGithubRepos').sort_values(
-        'n_recent_stars', ascending=False
-    )
+    repos, date = get_values('TrendingGithubRepos')
+    repos = repos.sort_values('n_recent_stars', ascending=False)
     repos['description'] = repos['description'].apply(lambda s: s.strip())
     repos.insert(
         0,
@@ -71,4 +64,5 @@ if __name__ == '__main__':
         ),
     )
     repos.drop(columns=['n_recent_stars', 'url'], inplace=True)
+    st.caption(f'[{date}] Github Repos')
     st.write(repos.to_html(escape=False, index=False), unsafe_allow_html=True)
