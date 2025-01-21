@@ -6,7 +6,7 @@ from typing import Generic, List
 import requests
 from telegram import Bot
 
-from argus.tasks.base.data import T
+from argus.tasks.base.serializable import T
 
 logger = logging.getLogger(__name__)
 

@@ -1,18 +1,31 @@
 import json
 import logging
 import time
-from abc import ABC, abstractmethod
-from typing import Generic, Optional
+from abc import ABC, ABCMeta, abstractmethod
+from typing import Generic, Optional, TypeVar, cast
 
-from argus.tasks.base.data import JsonType, T
 from argus.tasks.base.database import TaskResult, db
 from argus.tasks.base.notifier import FormattedNotifier
 from argus.tasks.base.scheduler import Scheduler
+from argus.tasks.base.serializable import JsonDict, Serializable
 
 logger = logging.getLogger(__name__)
 
 
-class Task(ABC, Generic[T]):
+T = TypeVar('T', bound=Serializable)
+
+TASK_REGISTRY: dict[str, type['Task']] = {}
+
+
+class TaskMeta(ABCMeta):
+    def __new__(mcs, name: str, bases: tuple, dct: dict):
+        new_cls = super().__new__(mcs, name, bases, dct)
+        if name != 'Task' and not new_cls.__abstractmethods__:
+            TASK_REGISTRY[name] = cast(type['Task'], new_cls)
+        return new_cls
+
+
+class Task(Serializable, ABC, Generic[T], metaclass=TaskMeta):
     def __init__(
         self,
         scheduler: Optional[Scheduler] = None,
@@ -31,7 +44,7 @@ class Task(ABC, Generic[T]):
 
     def save_result(self, result: T) -> None:
         """Stores the result in the database."""
-        serialized_result = json.dumps(result.to_json_data())
+        serialized_result = json.dumps(result.to_dict())
         TaskResult.create(task_name=self._name, result=serialized_result)
 
     def notify_result(self, result: T) -> None:
@@ -55,12 +68,23 @@ class Task(ABC, Generic[T]):
                 self._scheduler.set_next_runtime()
             logger.info('%s finished. Next run time: %s', self._name, self._scheduler)
 
+    def to_dict(self) -> JsonDict:
+        return {
+            'task_type': type(self).__name__,
+        }
+
+    @classmethod
+    def from_dict(cls, data: JsonDict) -> 'Task':
+        task_type = data.pop('task_type')
+        task_class = TASK_REGISTRY[task_type]
+        return task_class.from_dict(data)
+
     def __repr__(self) -> str:
         return f'{self._name}[{self._scheduler}]'
 
 
 class ChangeDetectingTask(Task[T], ABC):
-    def get_previous_result_json(self) -> JsonType | None:
+    def get_previous_result_json(self) -> JsonDict | None:
         """Fetches the previous result from the database."""
         with db:
             previous_entry = (
@@ -74,7 +98,7 @@ class ChangeDetectingTask(Task[T], ABC):
     def has_changes(self, current_result: T) -> bool:
         """Compares the current result with the previous result."""
         previous_result_json = self.get_previous_result_json()
-        return previous_result_json != current_result.to_json_data()
+        return previous_result_json != current_result.to_dict()
 
     def on_run_completed(self, result: T) -> None:
         """Saves and notifies only if changes are detected."""

@@ -1,19 +1,23 @@
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 
-from argus.tasks.base.data import JsonSerializable, JsonType
 from argus.tasks.base.notifier import FormattedNotifier, MessageFormatter
 from argus.tasks.base.scheduler import Frequency, Scheduler, SchedulerConfig
+from argus.tasks.base.serializable import JsonDict, Serializable
 from argus.tasks.base.task import Task
 
 
 @dataclass(frozen=True)
-class Todo(JsonSerializable):
+class Todo(Serializable):
     title: str
     date: datetime
 
-    def to_json_data(self) -> JsonType:
+    def to_dict(self) -> JsonDict:
         return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: JsonDict) -> 'Todo':
+        return cls(**data)
 
 
 class TodoTask(Task[Todo]):

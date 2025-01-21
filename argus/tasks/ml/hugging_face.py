@@ -5,9 +5,9 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-from argus.tasks.base.data import JsonSerializable, JsonType
 from argus.tasks.base.format_utils import dataframe_to_str
 from argus.tasks.base.notifier import MessageFormatter
+from argus.tasks.base.serializable import JsonDict, Serializable
 from argus.tasks.base.task import Task
 
 
@@ -18,9 +18,13 @@ class ModelInfo:
     n_downloads: int
 
 
-class TrendingModelsData(list[ModelInfo], JsonSerializable):
-    def to_json_data(self) -> JsonType:
-        return [asdict(model_info) for model_info in self]
+class TrendingModelsData(list[ModelInfo], Serializable):
+    def to_dict(self) -> JsonDict:
+        return {'models': [asdict(model_info) for model_info in self]}
+
+    @classmethod
+    def from_dict(cls, data: JsonDict) -> 'TrendingModelsData':
+        return TrendingModelsData([ModelInfo(**entry) for entry in data['models']])
 
 
 class HuggingFaceTrendingModelsTask(Task[TrendingModelsData]):
@@ -48,7 +52,7 @@ class HuggingFaceModelFormatter(MessageFormatter[TrendingModelsData]):
     TOP_K = 10
 
     def format(self, data: TrendingModelsData) -> str:
-        df = pd.DataFrame(data.to_json_data())
+        df = pd.DataFrame(data.to_dict()['models'])
         df = df.sort_values('n_likes', ascending=False)
         df['model_id'] = 'https://huggingface.co/' + df['model_id'].str.lstrip('/')
         df = df.iloc[: self.TOP_K]
@@ -62,9 +66,13 @@ class Paper:
     n_likes: int
 
 
-class Papers(list[Paper], JsonSerializable):
-    def to_json_data(self) -> JsonType:
-        return [asdict(paper) for paper in self]
+class Papers(list[Paper], Serializable):
+    def to_dict(self) -> JsonDict:
+        return {'papers': [asdict(paper) for paper in self]}
+
+    @classmethod
+    def from_dict(cls, data: JsonDict) -> 'Papers':
+        return Papers([Paper(**entry) for entry in data['papers']])
 
 
 class HuggingFaceTrendingPapersTask(Task[Papers]):
@@ -99,7 +107,7 @@ class HuggingFacePapersFormatter(MessageFormatter[Papers]):
     TOP_K = 10
 
     def format(self, data: Papers) -> str:
-        df = pd.DataFrame(data.to_json_data())
+        df = pd.DataFrame(data.to_dict()['papers'])
         df = df.sort_values('n_likes', ascending=False)
         df['url'] = 'https://huggingface.co/' + df['url'].str.lstrip('/')
         df = df.iloc[: self.TOP_K]

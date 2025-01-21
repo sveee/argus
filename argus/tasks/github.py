@@ -5,9 +5,9 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-from argus.tasks.base.data import JsonSerializable, JsonType
 from argus.tasks.base.format_utils import dataframe_to_str
 from argus.tasks.base.notifier import MessageFormatter
+from argus.tasks.base.serializable import JsonDict, Serializable
 from argus.tasks.base.task import Task
 
 
@@ -31,9 +31,13 @@ class RepoLanguage(Enum):
     JUPYTER = 'Jupyter Notebook'
 
 
-class Repos(list[Repo], JsonSerializable):
-    def to_json_data(self) -> JsonType:
-        return [asdict(repo) for repo in self]
+class Repos(list[Repo], Serializable):
+    def to_dict(self) -> JsonDict:
+        return {'repos': [asdict(repo) for repo in self]}
+
+    @classmethod
+    def from_dict(cls, data: JsonDict) -> 'Repos':
+        return Repos([Repo(**repo) for repo in data['repos']])
 
 
 class TrendingGithubRepos(Task[Repos]):
@@ -91,7 +95,7 @@ class GithubSlackFormatter(MessageFormatter[Repos]):
     TOP_K = 10
 
     def format(self, data: Repos) -> str:
-        df = pd.DataFrame(data.to_json_data())
+        df = pd.DataFrame(data.to_dict()['repos'])
         df['gain'] = df['n_recent_stars'] / df['n_stars']
         df = df.sort_values('gain', ascending=False)
         df['description'] = df.description.str.strip()

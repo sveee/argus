@@ -16,7 +16,9 @@ def get_values(task_name: str) -> tuple[pd.DataFrame, datetime]:
             .first()
         )
 
-    return pd.DataFrame(json.loads(latest_task.result)), latest_task.created_at[:11]
+    return pd.DataFrame(
+        json.loads(latest_task.result)
+    ), latest_task.created_at.strftime('%Y-%m-%d')
 
 
 if __name__ == '__main__':

@@ -2,15 +2,14 @@ import os
 import re
 import time
 from dataclasses import asdict, dataclass
-from typing import List
 
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-from argus.tasks.base.data import JsonSerializable, JsonType
 from argus.tasks.base.format_utils import dataframe_to_str
 from argus.tasks.base.notifier import MessageFormatter
+from argus.tasks.base.serializable import JsonDict, Serializable
 from argus.tasks.base.task import ChangeDetectingTask
 
 
@@ -20,9 +19,13 @@ class BillEntry:
     amount: float
 
 
-class Bills(List[BillEntry], JsonSerializable):
-    def to_json_data(self) -> JsonType:
-        return [asdict(entry) for entry in self]
+class Bills(list[BillEntry], Serializable):
+    def to_dict(self) -> JsonDict:
+        return {'bills': [asdict(entry) for entry in self]}
+
+    @classmethod
+    def from_dict(cls, data: JsonDict) -> 'Bills':
+        return Bills([BillEntry(**entry) for entry in data['bills']])
 
 
 class EpayClient:
@@ -127,7 +130,7 @@ class EPayTask(ChangeDetectingTask[Bills]):
 
 
 def _prepare_data(data: Bills) -> pd.DataFrame:
-    df = pd.DataFrame(data.to_json_data())
+    df = pd.DataFrame(data.to_dict()['bills'])
     df = pd.concat(
         [df, pd.DataFrame([{"name": 'Total', "amount": df.amount.sum()}])]
     ).reset_index(drop=True)
