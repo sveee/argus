@@ -20,6 +20,15 @@ class TaskResult(Model):
         database = db
 
 
+class RunningTask(Model):
+    task_name = CharField(unique=True)
+    serialized_data = TextField()
+    last_updated = DateTimeField(default=get_current_utc_time)
+
+    class Meta:
+        database = db
+
+
 def init_database() -> None:
     with db:
-        db.create_tables([TaskResult])
+        db.create_tables([RunningTask, TaskResult])

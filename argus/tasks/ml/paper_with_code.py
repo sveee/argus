@@ -5,7 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from argus.tasks.base.format_utils import dataframe_to_str
-from argus.tasks.base.notifier import MessageFormatter
+from argus.tasks.base.notifier import DataFormatter
 from argus.tasks.base.serializable import JsonDict, Serializable
 from argus.tasks.base.task import Task
 
@@ -58,7 +58,7 @@ class TrendingPapersWithCodeTask(Task[Papers]):
         )
 
 
-class PapersWithCodeSlackFormatter(MessageFormatter[Papers]):
+class PapersWithCodeSlackFormatter(DataFormatter[Papers]):
     TOP_K = 10
 
     def format(self, data: Papers) -> str:

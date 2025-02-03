@@ -8,7 +8,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from argus.tasks.base.format_utils import dataframe_to_str
-from argus.tasks.base.notifier import MessageFormatter
+from argus.tasks.base.notifier import DataFormatter
 from argus.tasks.base.serializable import JsonDict, Serializable
 from argus.tasks.base.task import ChangeDetectingTask
 
@@ -137,6 +137,6 @@ def _prepare_data(data: Bills) -> pd.DataFrame:
     return '💸 *Bills* 💸\n```\n' + dataframe_to_str(df) + '\n```'
 
 
-class EPayFormatter(MessageFormatter[Bills]):
+class EPayFormatter(DataFormatter[Bills]):
     def format(self, data: Bills) -> str:
         return _prepare_data(data)

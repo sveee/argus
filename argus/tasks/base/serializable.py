@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
-from typing import Any, TypeVar
+from abc import ABC
+from typing import Any, TypeVar, cast
 
 T = TypeVar('T', bound='Serializable')
 
@@ -11,11 +11,24 @@ JsonType = JsonValue | JsonArray | JsonDict
 
 
 class Serializable(ABC):
-    @abstractmethod
+
+    registry: dict[str, type['Serializable']] = {}
+
+    def __init_subclass__(cls, **kwargs):
+        '''Auto-register subclasses for correct deserialization.'''
+        super().__init_subclass__(**kwargs)
+        cls.registry[cls.__name__] = cls
+
     def to_dict(self) -> JsonDict:
-        pass
+        return {'__class__': self.__class__.__name__}
 
     @classmethod
-    @abstractmethod
     def from_dict(cls: type[T], data: JsonDict) -> T:
-        pass
+        class_name = data.pop('__class__', None)
+        if class_name is None:
+            return cls(**data)
+        subclass = cls.registry.get(class_name)
+        if subclass is None:
+            raise ValueError(f'Unknown class: {class_name}')
+        subclass_type = cast(type[T], subclass)
+        return subclass_type.from_dict(data)

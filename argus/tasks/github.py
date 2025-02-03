@@ -6,7 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from argus.tasks.base.format_utils import dataframe_to_str
-from argus.tasks.base.notifier import MessageFormatter
+from argus.tasks.base.notifier import DataFormatter
 from argus.tasks.base.serializable import JsonDict, Serializable
 from argus.tasks.base.task import Task
 
@@ -40,7 +40,7 @@ class Repos(list[Repo], Serializable):
         return Repos([Repo(**repo) for repo in data['repos']])
 
 
-class TrendingGithubRepos(Task[Repos]):
+class TrendingGithubReposTask(Task[Repos]):
 
     LIMIT = 10
 
@@ -91,7 +91,7 @@ class TrendingGithubRepos(Task[Repos]):
         return Repos(repos)
 
 
-class GithubSlackFormatter(MessageFormatter[Repos]):
+class GithubSlackFormatter(DataFormatter[Repos]):
     TOP_K = 10
 
     def format(self, data: Repos) -> str:
