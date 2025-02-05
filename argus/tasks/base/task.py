@@ -2,7 +2,7 @@ import json
 import logging
 import time
 from abc import ABC, abstractmethod
-from typing import Generic
+from typing import Generic, cast
 
 from argus.tasks.base.database import RunningTask, TaskResult
 from argus.tasks.base.notifier import DataFormatter, Notifier
@@ -18,37 +18,34 @@ class Task(Serializable, ABC, Generic[T]):
         scheduler: Scheduler | None = None,
         formatter: DataFormatter | None = None,
         notifier: Notifier | None = None,
-        store_to_db: bool = True,
     ) -> None:
         self._scheduler = scheduler if scheduler else None
         self._formatter = formatter
         self._notifier = notifier
         self._name = type(self).__name__
-        self._store_to_db = store_to_db
 
     @abstractmethod
     def run(self) -> T:
-        """Runs the task and returns the result."""
+        '''Runs the task and returns the result.'''
         pass
 
     def save_result(self, result: T) -> None:
-        """Stores the result in the database."""
+        '''Stores the result in the database.'''
         serialized_result = json.dumps(result.to_dict())
         TaskResult.create(task_name=self._name, result=serialized_result)
 
     def notify_result(self, result: T) -> None:
-        """Notifies using the notifier if available."""
+        '''Notifies using the notifier if available.'''
         if self._notifier and self._formatter:
             self._notifier.notify(self._formatter.format(result))
 
     def on_run_completed(self, result: T) -> None:
-        """Handles result storage and notifications."""
-        if self._store_to_db:
-            self.save_result(result)
+        '''Handles result storage and notifications.'''
+        self.save_result(result)
         self.notify_result(result)
 
     def run_if_due(self) -> None:
-        """Runs the task if it is due, handles scheduling, storing, and notifying."""
+        '''Runs the task if it is due, handles scheduling, storing, and notifying.'''
         if not self._scheduler or self._scheduler.is_due():
             logger.info('%s running', self._name)
             result = self.run()
@@ -56,6 +53,19 @@ class Task(Serializable, ABC, Generic[T]):
             if self._scheduler:
                 self._scheduler.set_next_runtime()
             logger.info('%s finished. Next run time: %s', self._name, self._scheduler)
+
+    @staticmethod
+    def serialize_parameters(data: JsonDict) -> JsonDict:
+        return {
+            'formatter': (
+                DataFormatter.from_dict(data['formatter'])
+                if data['formatter']
+                else None
+            ),
+            'notifier': (
+                Notifier.from_dict(data['notifier']) if data['notifier'] else None
+            ),
+        }
 
     def to_dict(self) -> JsonDict:
         return {
@@ -71,7 +81,7 @@ class Task(Serializable, ABC, Generic[T]):
 
 class ChangeDetectingTask(Task[T], ABC):
     def get_previous_result_json(self) -> JsonDict | None:
-        """Fetches the previous result from the database."""
+        '''Fetches the previous result from the database.'''
         previous_entry = (
             TaskResult.select()
             .where(TaskResult.task_name == self.__class__.__name__)
@@ -81,24 +91,23 @@ class ChangeDetectingTask(Task[T], ABC):
         return json.loads(previous_entry.result) if previous_entry else None
 
     def has_changes(self, current_result: T) -> bool:
-        """Compares the current result with the previous result."""
+        '''Compares the current result with the previous result.'''
         previous_result_json = self.get_previous_result_json()
         return previous_result_json != current_result.to_dict()
 
     def on_run_completed(self, result: T) -> None:
-        """Saves and notifies only if changes are detected."""
+        '''Saves and notifies only if changes are detected.'''
         if self.has_changes(result):
             logger.info('%s detected changes and saved results', self._name)
             self.notify_result(result)
-            if self._store_to_db:
-                self.save_result(result)
+            self.save_result(result)
         else:
             logger.info('%s no changes detected', self._name)
 
 
 class TaskManager:
-    def __init__(self, tasks: list[Task], run_delay: int = 30) -> None:
-        self._tasks = tasks
+    def __init__(self, run_delay: int = 30) -> None:
+        self._tasks: list[Task] = []
         self._run_delay = run_delay
         self._running = True
         self._tasks = []
@@ -118,11 +127,12 @@ class TaskManager:
         return False
 
     def _load_running_tasks(self) -> None:
-        """Fetch and deserialize active tasks from the database."""
+        '''Fetch and deserialize active tasks from the database.'''
         tasks = RunningTask.select().order_by(RunningTask.last_updated.desc())
         self._tasks = [
             Task.from_dict(json.loads(task.serialized_data)) for task in tasks
         ]
+        logger.info(f'New tasks: %s', self._tasks)
 
     def run(self):
         logger.info('Task Manager started')

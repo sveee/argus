@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Generic, List
 
 import requests
@@ -11,7 +11,7 @@ from argus.tasks.base.serializable import JsonDict, Serializable, T
 logger = logging.getLogger(__name__)
 
 
-class DataFormatter(Serializable, Generic[T]):
+class DataFormatter(Serializable, ABC, Generic[T]):
     @abstractmethod
     def format(self, data: T) -> str:
         """Format the data into a notification message."""

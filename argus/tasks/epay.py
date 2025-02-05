@@ -1,4 +1,3 @@
-import os
 import re
 import time
 from dataclasses import asdict, dataclass
@@ -121,12 +120,30 @@ class EpayClient:
 
 
 class EPayTask(ChangeDetectingTask[Bills]):
+
+    def __init__(self, username: str, password: str, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._username = username
+        self._password = password
+
     def run(self) -> Bills:
-        with EpayClient(
-            os.environ['EPAY_USERNAME'], os.environ['EPAY_PASSWORD']
-        ) as epay_client:
+        with EpayClient(self._password, self._password) as epay_client:
             bills = epay_client.get_bills()
         return bills
+
+    def to_dict(self) -> JsonDict:
+        return super().to_dict() | {
+            'username': self._username,
+            'password': self._password,
+        }
+
+    @classmethod
+    def from_dict(cls: type['EPayTask'], data: JsonDict) -> 'EPayTask':
+        return EPayTask(
+            username=data['username'],
+            password=data['password'],
+            **cls.serialize_parameters(data),
+        )
 
 
 def _prepare_data(data: Bills) -> pd.DataFrame:

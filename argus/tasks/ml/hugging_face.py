@@ -11,7 +11,7 @@ from argus.tasks.base.serializable import JsonDict, Serializable
 from argus.tasks.base.task import Task
 
 
-@dataclass
+@dataclass(frozen=True)
 class ModelInfo:
     model_id: str
     n_likes: int

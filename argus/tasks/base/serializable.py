@@ -1,4 +1,3 @@
-from abc import ABC
 from typing import Any, TypeVar, cast
 
 T = TypeVar('T', bound='Serializable')
@@ -10,7 +9,7 @@ JsonDict = dict[str, Any]
 JsonType = JsonValue | JsonArray | JsonDict
 
 
-class Serializable(ABC):
+class Serializable:
 
     registry: dict[str, type['Serializable']] = {}
 
@@ -22,11 +21,15 @@ class Serializable(ABC):
     def to_dict(self) -> JsonDict:
         return {'__class__': self.__class__.__name__}
 
+    @staticmethod
+    def serialize_parameters(data: JsonDict) -> JsonDict:
+        return data
+
     @classmethod
     def from_dict(cls: type[T], data: JsonDict) -> T:
         class_name = data.pop('__class__', None)
         if class_name is None:
-            return cls(**data)
+            return cls(**cls.serialize_parameters(data))
         subclass = cls.registry.get(class_name)
         if subclass is None:
             raise ValueError(f'Unknown class: {class_name}')

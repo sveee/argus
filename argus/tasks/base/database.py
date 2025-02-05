@@ -11,17 +11,15 @@ def get_current_utc_time():
 
 class TaskResult(Model):
     task_name = CharField()
-    result = TextField()  # Store the result as a JSON-encoded string
-    created_at = DateTimeField(
-        default=get_current_utc_time
-    )  # UTC timestamp for entry creation
+    result = TextField()
+    created_at = DateTimeField(default=get_current_utc_time)
 
     class Meta:
         database = db
 
 
 class RunningTask(Model):
-    task_name = CharField(unique=True)
+    task_name = CharField()
     serialized_data = TextField()
     last_updated = DateTimeField(default=get_current_utc_time)
 
@@ -30,5 +28,4 @@ class RunningTask(Model):
 
 
 def init_database() -> None:
-    with db:
-        db.create_tables([RunningTask, TaskResult])
+    db.create_tables([RunningTask, TaskResult])

@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from zoneinfo import ZoneInfo
@@ -60,8 +60,43 @@ class SchedulerConfig:
     frequency: Frequency = Frequency.LIST
     timezone: str = 'Europe/Sofia'
     adjust_to_current_time: bool = True
-    skip_months: list[int] | None = None
+    skip_months: list[Month] | None = None
     skip_days: list[Day] | None = None
+
+    def to_dict(self) -> JsonDict:
+        return {
+            'frequency': self.frequency.value,
+            'timezone': self.timezone,
+            'adjust_to_current_time': self.adjust_to_current_time,
+            'skip_months': (
+                [month.value for month in self.skip_months]
+                if self.skip_months
+                else self.skip_months
+            ),
+            'skip_days': (
+                [day.value for day in self.skip_days]
+                if self.skip_days
+                else self.skip_days
+            ),
+        }
+
+    @staticmethod
+    def from_dict(data: JsonDict) -> 'SchedulerConfig':
+        return SchedulerConfig(
+            frequency=Frequency(data['frequency']),
+            timezone=data['timezone'],
+            adjust_to_current_time=data['adjust_to_current_time'],
+            skip_months=(
+                [Month(month) for month in data['skip_months']]
+                if data['skip_months']
+                else data['skip_months']
+            ),
+            skip_days=(
+                [Day(day) for day in data['skip_days']]
+                if data['skip_days']
+                else data['skip_days']
+            ),
+        )
 
 
 class Scheduler(Serializable):
@@ -126,12 +161,12 @@ class Scheduler(Serializable):
     def to_dict(self) -> JsonDict:
         return {
             'runtimes': [runtime.isoformat() for runtime in self._runtimes],
-            'config': asdict(self.config),
+            'config': self.config.to_dict(),
         }
 
     @classmethod
     def from_dict(cls, data: JsonDict) -> 'Scheduler':
         return Scheduler(
             runtimes=[datetime.fromisoformat(runtime) for runtime in data['runtimes']],
-            config=SchedulerConfig(**data['config']),
+            config=SchedulerConfig.from_dict(data['config']),
         )

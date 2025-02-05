@@ -90,6 +90,26 @@ class TrendingGithubReposTask(Task[Repos]):
             )
         return Repos(repos)
 
+    def to_dict(self) -> JsonDict:
+        return super().to_dict() | {
+            'date_range': RepoDateRange.WEEKLY.value,
+            'languages': self.languages,
+        }
+
+    @classmethod
+    def from_dict(
+        cls: type['TrendingGithubReposTask'], data: JsonDict
+    ) -> 'TrendingGithubReposTask':
+        return TrendingGithubReposTask(
+            date_range=RepoDateRange(data['date_range']),
+            title=(
+                [RepoLanguage(language) for language in data['languages']]
+                if data['languages']
+                else data['languages']
+            ),
+            **cls.serialize_parameters(data),
+        )
+
 
 class GithubSlackFormatter(DataFormatter[Repos]):
     TOP_K = 10

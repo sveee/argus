@@ -39,7 +39,6 @@ class TodoTask(Task[Todo]):
             ),
             formatter=formatter,
             notifier=notifier,
-            store_to_db=False,
         )
         self._remind_in = remind_in
         self._title = title
@@ -52,15 +51,15 @@ class TodoTask(Task[Todo]):
         )
 
     def to_dict(self) -> JsonDict:
-        data = super().to_dict()
-        data['target_date'] = self._target_date.isoformat()
-        data['title'] = self._title
-        data['remind_in'] = (
-            [delta.total_seconds() for delta in self._remind_in]
-            if self._remind_in
-            else None
-        )
-        return data
+        return super().to_dict() | {
+            'target_date': self._target_date.isoformat(),
+            'title': self._title,
+            'remind_in': (
+                [delta.total_seconds() for delta in self._remind_in]
+                if self._remind_in
+                else None
+            ),
+        }
 
     @classmethod
     def from_dict(cls: type['TodoTask'], data: dict) -> 'TodoTask':
@@ -68,14 +67,7 @@ class TodoTask(Task[Todo]):
             target_date=datetime.fromisoformat(data['target_date']),
             title=data['title'],
             remind_in=[timedelta(seconds=seconds) for seconds in data['remind_in']],
-            formatter=(
-                DataFormatter.from_dict(data['formatter'])
-                if data['formatter']
-                else None
-            ),
-            notifier=(
-                Notifier.from_dict(data['notifier']) if data['notifier'] else None
-            ),
+            **cls.serialize_parameters(data),
         )
 
 
