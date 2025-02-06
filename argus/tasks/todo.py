@@ -1,7 +1,7 @@
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 
-from argus.tasks.base.notifier import DataFormatter, Notifier
+from argus.tasks.base.notifier import DataFormatter
 from argus.tasks.base.scheduler import Frequency, Scheduler, SchedulerConfig
 from argus.tasks.base.serializable import JsonDict, Serializable
 from argus.tasks.base.task import Task
@@ -27,18 +27,18 @@ class TodoTask(Task[Todo]):
         target_date: datetime,
         title: str,
         remind_in: list[timedelta] | None = None,
-        formatter: DataFormatter | None = None,
-        notifier: Notifier | None = None,
+        **kwargs,
     ) -> None:
         target_date = target_date.replace(hour=9, minute=0)
         remind_in = sorted(remind_in if remind_in else [timedelta()], reverse=True)
         super().__init__(
-            Scheduler(
+            scheduler=Scheduler(
                 [target_date - delta for delta in remind_in],
                 SchedulerConfig(frequency=Frequency.LIST),
             ),
-            formatter=formatter,
-            notifier=notifier,
+            task_id=kwargs.get('task_id'),
+            formatter=kwargs.get('formatter'),
+            notifier=kwargs.get('notifier'),
         )
         self._remind_in = remind_in
         self._title = title

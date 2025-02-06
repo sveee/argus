@@ -11,7 +11,7 @@ def get_values(task_name: str) -> tuple[pd.DataFrame, datetime]:
     with db:
         latest_task = (
             TaskResult.select()
-            .where(TaskResult.task_name == task_name)
+            .where(TaskResult.task_id == task_name)
             .order_by(TaskResult.created_at.desc())
             .first()
         )
