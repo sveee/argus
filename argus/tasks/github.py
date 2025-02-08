@@ -93,7 +93,7 @@ class TrendingGithubReposTask(Task[Repos]):
     def to_dict(self) -> JsonDict:
         return super().to_dict() | {
             'date_range': RepoDateRange.WEEKLY.value,
-            'languages': self.languages,
+            'languages': sorted(self.languages),
         }
 
     @classmethod
@@ -102,7 +102,7 @@ class TrendingGithubReposTask(Task[Repos]):
     ) -> 'TrendingGithubReposTask':
         return TrendingGithubReposTask(
             date_range=RepoDateRange(data['date_range']),
-            title=(
+            languages=(
                 [RepoLanguage(language) for language in data['languages']]
                 if data['languages']
                 else data['languages']

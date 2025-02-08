@@ -117,8 +117,7 @@ class ChangeDetectingTask(Task[T], ABC):
         '''Saves and notifies only if changes are detected.'''
         if self.has_changes(result):
             logger.info('%s detected changes and saved results', self.task_id)
-            self.notify_result(result)
-            self.save_result(result)
+            super().on_run_completed(result)
         else:
             logger.info('%s no changes detected', self.task_id)
 
