@@ -10,7 +10,7 @@ def get_current_utc_time():
 
 
 class TaskResult(Model):
-    task_id = CharField(unique=True)
+    task_id = CharField()
     result = TextField()
     created_at = DateTimeField(default=get_current_utc_time)
 
