@@ -52,8 +52,8 @@ class TrendingGithubReposTask(Task[Repos]):
     ) -> None:
         super().__init__(**kwargs)
         self.date_range = date_range.value
-        self.languages = (
-            {language.value for language in languages} if languages else None
+        self.languages: set[str] = (
+            {language.value for language in languages} if languages else set()
         )
 
     def run(self) -> Repos:

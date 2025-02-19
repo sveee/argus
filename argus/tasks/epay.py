@@ -114,7 +114,7 @@ class EpayClient:
             bills.append(
                 BillEntry(
                     name=bill_entry['REG_DESCR'],
-                    id=bill_entry['IDN'][:8],
+                    id=bill_entry['IDN'][-8:],
                     amount=amount,
                 )
             )
