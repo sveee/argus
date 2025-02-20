@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from peewee import AutoField, CharField, DateTimeField, Model, SqliteDatabase, TextField
+from peewee import CharField, DateTimeField, Model, SqliteDatabase, TextField
 
 db = SqliteDatabase('tasks.db')
 
