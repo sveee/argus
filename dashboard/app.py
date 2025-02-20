@@ -47,6 +47,9 @@ def get_repos():
     repos = get_task_latest_result('weekly_github_ml_repos')
     repos_df = pd.DataFrame(repos['repos'])
     repos_df = repos_df.sort_values('n_recent_stars', ascending=False)
+    repos_df.insert(
+        0, 'repo', repos_df.url.apply(lambda x: x.removeprefix('https://github.com/'))
+    )
     return repos_df
 
 
