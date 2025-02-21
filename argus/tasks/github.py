@@ -5,9 +5,9 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-from argus.tasks.base.data import JsonSerializable, JsonType
 from argus.tasks.base.format_utils import dataframe_to_str
-from argus.tasks.base.notifier import MessageFormatter
+from argus.tasks.base.notifier import DataFormatter
+from argus.tasks.base.serializable import JsonDict, Serializable
 from argus.tasks.base.task import Task
 
 
@@ -31,12 +31,16 @@ class RepoLanguage(Enum):
     JUPYTER = 'Jupyter Notebook'
 
 
-class Repos(list[Repo], JsonSerializable):
-    def to_json_data(self) -> JsonType:
-        return [asdict(repo) for repo in self]
+class Repos(list[Repo], Serializable):
+    def to_dict(self) -> JsonDict:
+        return {'repos': [asdict(repo) for repo in self]}
+
+    @classmethod
+    def from_dict(cls, data: JsonDict) -> 'Repos':
+        return Repos([Repo(**repo) for repo in data['repos']])
 
 
-class TrendingGithubRepos(Task[Repos]):
+class TrendingGithubReposTask(Task[Repos]):
 
     LIMIT = 10
 
@@ -48,8 +52,8 @@ class TrendingGithubRepos(Task[Repos]):
     ) -> None:
         super().__init__(**kwargs)
         self.date_range = date_range.value
-        self.languages = (
-            {language.value for language in languages} if languages else None
+        self.languages: set[str] = (
+            {language.value for language in languages} if languages else set()
         )
 
     def run(self) -> Repos:
@@ -86,12 +90,32 @@ class TrendingGithubRepos(Task[Repos]):
             )
         return Repos(repos)
 
+    def to_dict(self) -> JsonDict:
+        return super().to_dict() | {
+            'date_range': RepoDateRange.WEEKLY.value,
+            'languages': sorted(self.languages),
+        }
 
-class GithubSlackFormatter(MessageFormatter[Repos]):
+    @classmethod
+    def from_dict(
+        cls: type['TrendingGithubReposTask'], data: JsonDict
+    ) -> 'TrendingGithubReposTask':
+        return TrendingGithubReposTask(
+            date_range=RepoDateRange(data['date_range']),
+            languages=(
+                [RepoLanguage(language) for language in data['languages']]
+                if data['languages']
+                else data['languages']
+            ),
+            **cls.serialize_parameters(data),
+        )
+
+
+class GithubSlackFormatter(DataFormatter[Repos]):
     TOP_K = 10
 
     def format(self, data: Repos) -> str:
-        df = pd.DataFrame(data.to_json_data())
+        df = pd.DataFrame(data.to_dict()['repos'])
         df['gain'] = df['n_recent_stars'] / df['n_stars']
         df = df.sort_values('gain', ascending=False)
         df['description'] = df.description.str.strip()

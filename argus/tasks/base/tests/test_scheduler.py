@@ -120,6 +120,18 @@ class TestScheduler(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             scheduler.set_next_runtime()
 
+    def test_serialization(self):
+        scheduler = Scheduler(
+            runtimes=[datetime(2023, 12, 29, 9, 0)],
+            config=SchedulerConfig(
+                adjust_to_current_time=False,
+            ),
+        )
+        serialized_scheduler = scheduler.to_dict()
+        deserialized_scheduler = Scheduler.from_dict(serialized_scheduler)
+        self.assertEqual(scheduler.next_runtime, deserialized_scheduler.next_runtime)
+        self.assertEqual(scheduler.config, deserialized_scheduler.config)
+
 
 if __name__ == "__main__":
     unittest.main()

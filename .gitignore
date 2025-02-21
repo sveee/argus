@@ -4,8 +4,5 @@ __pycache__/
 # Poetry dependency management
 poetry.lock
 
-# Scripts directory
-scripts/
-
 # Database files
 *.db

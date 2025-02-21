@@ -6,39 +6,23 @@ from typing import Generic, List
 import requests
 from telegram import Bot
 
-from argus.tasks.base.data import T
+from argus.tasks.base.serializable import JsonDict, Serializable, T
 
 logger = logging.getLogger(__name__)
 
 
-class MessageFormatter(ABC, Generic[T]):
+class DataFormatter(Serializable, ABC, Generic[T]):
     @abstractmethod
     def format(self, data: T) -> str:
         """Format the data into a notification message."""
         pass
 
 
-class Notifier:
+class Notifier(Serializable):
     @abstractmethod
     def notify(self, text: str) -> None:
         """Send a notification with the provided message."""
         pass
-
-
-class FormattedNotifier:
-    """
-    A service that combines a notifier with a formatter to handle the complete
-    notification workflow for a specific type of data.
-    """
-
-    def __init__(self, notifier: Notifier, formatter: MessageFormatter) -> None:
-        self._notifier = notifier
-        self._formatter = formatter
-
-    def notify(self, data: T) -> None:
-        """Format the data and send the notification using the configured notifier."""
-        formatted_message = self._formatter.format(data)
-        self._notifier.notify(formatted_message)
 
 
 class SlackNotifier(Notifier):
@@ -65,10 +49,18 @@ class SlackNotifier(Notifier):
         for slack_hook in self._slack_hooks:
             self.post(text, slack_hook)
 
+    def to_dict(self) -> JsonDict:
+        return super().to_dict() | {'slack_hooks': self._slack_hooks}
+
+    @classmethod
+    def from_dict(cls, data: JsonDict) -> 'SlackNotifier':
+        return cls(slack_hooks=data['slack_hooks'])
+
 
 class TelegamNotifier(Notifier):
 
     def __init__(self, bot_token: str, chat_ids: list[str]) -> None:
+        self._bot_token = bot_token
         self._telegram_bot = Bot(token=bot_token)
         self._chat_ids = chat_ids
         self._loop = asyncio.new_event_loop()
@@ -84,3 +76,13 @@ class TelegamNotifier(Notifier):
 
     def notify(self, text: str) -> None:
         self._loop.run_until_complete(self.send_messages(text))
+
+    def to_dict(self) -> JsonDict:
+        return super().to_dict() | {
+            'bot_token': self._bot_token,
+            'chat_ids': self._chat_ids,
+        }
+
+    @classmethod
+    def from_dict(cls, data: JsonDict) -> 'TelegamNotifier':
+        return cls(bot_token=data['bot_token'], chat_ids=data['chat_ids'])

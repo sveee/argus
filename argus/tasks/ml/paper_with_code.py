@@ -4,13 +4,13 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-from argus.tasks.base.data import JsonSerializable, JsonType
 from argus.tasks.base.format_utils import dataframe_to_str
-from argus.tasks.base.notifier import MessageFormatter
+from argus.tasks.base.notifier import DataFormatter
+from argus.tasks.base.serializable import JsonDict, Serializable
 from argus.tasks.base.task import Task
 
 
-@dataclass
+@dataclass(frozen=True)
 class Paper:
     title: str
     stars: int
@@ -18,9 +18,14 @@ class Paper:
     url: str
 
 
-class Papers(list[Paper], JsonSerializable):
-    def to_json_data(self) -> JsonType:
-        return [asdict(paper) for paper in self]
+class Papers(list[Paper], Serializable):
+
+    def to_dict(self) -> JsonDict:
+        return {'papers': [asdict(paper) for paper in self]}
+
+    @classmethod
+    def from_dict(cls, data: JsonDict) -> 'Papers':
+        return Papers([Paper(**entry) for entry in data['papers']])
 
 
 class TrendingPapersWithCodeTask(Task[Papers]):
@@ -53,11 +58,11 @@ class TrendingPapersWithCodeTask(Task[Papers]):
         )
 
 
-class PapersWithCodeSlackFormatter(MessageFormatter[Papers]):
+class PapersWithCodeSlackFormatter(DataFormatter[Papers]):
     TOP_K = 10
 
     def format(self, data: Papers) -> str:
-        df = pd.DataFrame(data.to_json_data())
+        df = pd.DataFrame(data.to_dict()['papers'])
         df = df.sort_values('stars', ascending=False)
         df = df.iloc[: self.TOP_K]
         return '📝 *PaperWithCode Trending Papers*\n```' + dataframe_to_str(df) + '```'

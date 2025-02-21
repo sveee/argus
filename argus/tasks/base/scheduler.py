@@ -5,6 +5,8 @@ from zoneinfo import ZoneInfo
 
 from dateutil.relativedelta import relativedelta
 
+from argus.tasks.base.serializable import JsonDict, Serializable
+
 
 class Frequency(Enum):
     MONTHLY = 'monthly'
@@ -58,46 +60,78 @@ class SchedulerConfig:
     frequency: Frequency = Frequency.LIST
     timezone: str = 'Europe/Sofia'
     adjust_to_current_time: bool = True
-    skip_months: list[int] | None = None
+    skip_months: list[Month] | None = None
     skip_days: list[Day] | None = None
 
+    def to_dict(self) -> JsonDict:
+        return {
+            'frequency': self.frequency.value,
+            'timezone': self.timezone,
+            'adjust_to_current_time': self.adjust_to_current_time,
+            'skip_months': (
+                [month.value for month in self.skip_months]
+                if self.skip_months
+                else self.skip_months
+            ),
+            'skip_days': (
+                [day.value for day in self.skip_days]
+                if self.skip_days
+                else self.skip_days
+            ),
+        }
 
-class Scheduler:
+    @staticmethod
+    def from_dict(data: JsonDict) -> 'SchedulerConfig':
+        return SchedulerConfig(
+            frequency=Frequency(data['frequency']),
+            timezone=data['timezone'],
+            adjust_to_current_time=data['adjust_to_current_time'],
+            skip_months=(
+                [Month(month) for month in data['skip_months']]
+                if data['skip_months']
+                else data['skip_months']
+            ),
+            skip_days=(
+                [Day(day) for day in data['skip_days']]
+                if data['skip_days']
+                else data['skip_days']
+            ),
+        )
+
+
+class Scheduler(Serializable):
     def __init__(
         self,
         runtimes: list[datetime],
         config: SchedulerConfig | None = None,
     ) -> None:
-        self._config = config if config else SchedulerConfig()
-        self._delta = FREQ_TO_DELTA[self._config.frequency]
+        self.config = config if config else SchedulerConfig()
+        self._delta = FREQ_TO_DELTA[self.config.frequency]
         self._runtimes = sorted(
-            runtime.replace(tzinfo=ZoneInfo(self._config.timezone))
+            runtime.replace(tzinfo=ZoneInfo(self.config.timezone))
             for runtime in runtimes
         )
         self.next_runtime: datetime | None = self._runtimes[0]
-        if self._config.adjust_to_current_time:
+        if self.config.adjust_to_current_time:
             while self.next_runtime is not None and self.next_runtime < self.now():
                 self.set_next_runtime()
 
     def now(self) -> datetime:
-        return datetime.now(ZoneInfo(self._config.timezone))
+        return datetime.now(ZoneInfo(self.config.timezone))
 
     def _is_valid_runtime(self, runtime: datetime | None) -> bool:
         if runtime is None:
             return False
-        if self._config.skip_days and Day(runtime.weekday()) in self._config.skip_days:
+        if self.config.skip_days and Day(runtime.weekday()) in self.config.skip_days:
             return False
-        if (
-            self._config.skip_months
-            and Month(runtime.month) in self._config.skip_months
-        ):
+        if self.config.skip_months and Month(runtime.month) in self.config.skip_months:
             return False
         return True
 
     def set_next_runtime(self) -> None:
         if self.next_runtime is None:
             return
-        if self._config.frequency == Frequency.LIST:
+        if self.config.frequency == Frequency.LIST:
             self.next_runtime = next(
                 (
                     runtime
@@ -122,4 +156,17 @@ class Scheduler:
             self.next_runtime.strftime('%Y-%m-%d %H:%M:%S')
             if self.next_runtime
             else str(None)
+        )
+
+    def to_dict(self) -> JsonDict:
+        return {
+            'runtimes': [runtime.isoformat() for runtime in self._runtimes],
+            'config': self.config.to_dict(),
+        }
+
+    @classmethod
+    def from_dict(cls, data: JsonDict) -> 'Scheduler':
+        return Scheduler(
+            runtimes=[datetime.fromisoformat(runtime) for runtime in data['runtimes']],
+            config=SchedulerConfig.from_dict(data['config']),
         )
