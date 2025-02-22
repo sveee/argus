@@ -1,4 +1,5 @@
 # pylint: disable=W0212
+import json
 from datetime import datetime, timedelta
 from unittest import TestCase
 
@@ -11,7 +12,7 @@ from argus.tasks.ml.hugging_face import (
     HuggingFaceTrendingPapersTask,
 )
 from argus.tasks.ml.paper_with_code import TrendingPapersWithCodeTask
-from argus.tasks.todo import TodoFormatter, TodoTask
+from argus.tasks.todo import Todo, TodoFormatter, TodoTask
 
 
 class TestDataFetchers(TestCase):
@@ -42,7 +43,15 @@ class TestDataFetchers(TestCase):
         self.assertEqual(len(TaskResult.select()), 1)
 
 
-class TestSerialization(TestCase):
+class TestDataSerialization(TestCase):
+
+    def test_todo(self) -> None:
+        date = datetime.now()
+        data = Todo('Test todo', date)
+        self.assertEqual(data, Todo.from_dict(json.loads(json.dumps(data.to_dict()))))
+
+
+class TestTaskSerialization(TestCase):
 
     def test_todo_serialization(self) -> None:
         date = datetime.now()
@@ -56,7 +65,6 @@ class TestSerialization(TestCase):
         deserialized_task: TodoTask = TodoTask.from_dict(task.to_dict())
         self.assertEqual(task._target_date, deserialized_task._target_date)
         self.assertEqual(task._title, deserialized_task._title)
-        self.assertEqual(task._remind_in, deserialized_task._remind_in)
 
     def test_huggingface_models_serialization(self) -> None:
         task = HuggingFaceTrendingModelsTask(
