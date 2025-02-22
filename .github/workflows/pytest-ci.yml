@@ -2,7 +2,7 @@ name: Run Pytest on Entire Repository
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, sve/test-ci ]
   pull_request:
     branches: [ main ]
   schedule:
