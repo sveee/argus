@@ -37,31 +37,6 @@ jobs:
       run: |
         poetry install
 
-    # Install system dependencies for Playwright
-    - name: Install missing Playwright dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y \
-            libwoff1 \
-            libvpx7 \
-            libevent-2.1-7 \
-            libopus0 \
-            libgstreamer1.0-0 \
-            libgstreamer-plugins-base1.0-0 \
-            libgstreamer-gl1.0-0 \
-            libgstreamer-plugins-bad1.0-0 \
-            libharfbuzz-icu0 \
-            libhyphen0 \
-            libmanette-0.2-0 \
-            flite \
-            libgles2 \
-            libx264-dev
-
-    # Install Playwright browsers
-    - name: Install Playwright browsers
-      run: |
-        poetry run playwright install
-
     - name: Run tests
       run: |
         poetry run pytest -vx argus
