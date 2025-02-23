@@ -9,20 +9,22 @@ from argus.tasks.base.serializable import JsonDict, Serializable
 
 
 class Frequency(Enum):
-    MONTHLY = 'monthly'
-    WEEKLY = 'weekly'
-    DAILY = 'daily'
-    HOURLY = 'hourly'
     MINUTELY = 'minutely'
+    HOURLY = 'hourly'
+    DAILY = 'daily'
+    WEEKLY = 'weekly'
+    MONTHLY = 'monthly'
+    ANUALLY = 'annualy'
     LIST = 'list'
 
 
 FREQ_TO_DELTA = {
-    Frequency.MONTHLY: relativedelta(months=1),
-    Frequency.WEEKLY: relativedelta(weeks=1),
-    Frequency.DAILY: relativedelta(days=1),
-    Frequency.HOURLY: relativedelta(hours=1),
     Frequency.MINUTELY: relativedelta(minutes=1),
+    Frequency.HOURLY: relativedelta(hours=1),
+    Frequency.DAILY: relativedelta(days=1),
+    Frequency.WEEKLY: relativedelta(weeks=1),
+    Frequency.MONTHLY: relativedelta(months=1),
+    Frequency.ANUALLY: relativedelta(year=1),
     Frequency.LIST: None,
 }
 

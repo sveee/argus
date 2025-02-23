@@ -47,7 +47,7 @@ class TestDataSerialization(TestCase):
 
     def test_todo(self) -> None:
         date = datetime.now()
-        data = Todo('Test todo', date)
+        data = Todo(title='Test Todo', target_date=date)
         self.assertEqual(data, Todo.from_dict(json.loads(json.dumps(data.to_dict()))))
 
 

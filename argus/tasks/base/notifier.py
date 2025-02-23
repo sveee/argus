@@ -86,3 +86,24 @@ class TelegamNotifier(Notifier):
     @classmethod
     def from_dict(cls, data: JsonDict) -> 'TelegamNotifier':
         return cls(bot_token=data['bot_token'], chat_ids=data['chat_ids'])
+
+
+class StaticTelegramNotifier(TelegamNotifier):
+
+    def __init__(self, text: str, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._text = text
+
+    def notify(self, text: str) -> None:
+        return super().notify(self._text)
+
+    def to_dict(self) -> JsonDict:
+        return super().to_dict() | {
+            'text': self._text,
+        }
+
+    @classmethod
+    def from_dict(cls, data: JsonDict) -> 'StaticTelegramNotifier':
+        return cls(
+            text=data['text'], bot_token=data['bot_token'], chat_ids=data['chat_ids']
+        )

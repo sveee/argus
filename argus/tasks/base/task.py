@@ -152,7 +152,7 @@ class TaskManager:
 
     def _load_running_tasks(self) -> None:
         '''Fetch and deserialize active tasks from the database.'''
-        tasks = RunningTask.select().order_by()
+        tasks = list(RunningTask.select().order_by())
         self._tasks = [
             Task.from_dict(json.loads(task.serialized_data)) for task in tasks
         ]

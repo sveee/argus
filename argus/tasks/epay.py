@@ -156,6 +156,7 @@ class EPayTask(ChangeDetectingTask[Bills]):
 
 def _format_data_to_markdown(data: Bills) -> str:
     df = pd.DataFrame(data.to_dict()['bills'])
+    df = df.sort_values('name')
     df = pd.concat(
         [df, pd.DataFrame([{'name': 'Total', 'id': '', 'amount': df.amount.sum()}])]
     ).reset_index(drop=True)
