@@ -57,7 +57,7 @@ class SlackNotifier(Notifier):
         return cls(slack_hooks=data['slack_hooks'])
 
 
-class TelegamNotifier(Notifier):
+class TelegramNotifier(Notifier):
 
     def __init__(self, bot_token: str, chat_ids: list[str]) -> None:
         self._bot_token = bot_token
@@ -84,11 +84,11 @@ class TelegamNotifier(Notifier):
         }
 
     @classmethod
-    def from_dict(cls, data: JsonDict) -> 'TelegamNotifier':
+    def from_dict(cls, data: JsonDict) -> 'TelegramNotifier':
         return cls(bot_token=data['bot_token'], chat_ids=data['chat_ids'])
 
 
-class StaticTelegramNotifier(TelegamNotifier):
+class StaticTelegramNotifier(TelegramNotifier):
 
     def __init__(self, text: str, *args, **kwargs):
         super().__init__(*args, **kwargs)

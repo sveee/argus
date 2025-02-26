@@ -6,7 +6,7 @@ from unittest import TestCase
 from peewee import SqliteDatabase
 
 from argus.tasks.base.database import RunningTask, TaskResult
-from argus.tasks.base.notifier import TelegamNotifier
+from argus.tasks.base.notifier import TelegramNotifier
 from argus.tasks.ml.hugging_face import (
     HuggingFaceTrendingModelsTask,
     HuggingFaceTrendingPapersTask,
@@ -60,7 +60,7 @@ class TestTaskSerialization(TestCase):
             title='Test Todo',
             remind_in=[timedelta(seconds=15)],
             formatter=TodoFormatter(),
-            notifier=TelegamNotifier('test_token', ['chat_id1', 'chat_id2']),
+            notifier=TelegramNotifier('test_token', ['chat_id1', 'chat_id2']),
         )
         deserialized_task: TodoTask = TodoTask.from_dict(task.to_dict())
         self.assertEqual(task._target_date, deserialized_task._target_date)
@@ -69,8 +69,8 @@ class TestTaskSerialization(TestCase):
     def test_huggingface_models_serialization(self) -> None:
         task = HuggingFaceTrendingModelsTask(
             formatter=TodoFormatter(),
-            notifier=TelegamNotifier('test_token', ['chat_id1', 'chat_id2']),
+            notifier=TelegramNotifier('test_token', ['chat_id1', 'chat_id2']),
         )
         deserialized_task = HuggingFaceTrendingModelsTask.from_dict(task.to_dict())
         self.assertTrue(isinstance(deserialized_task._formatter, TodoFormatter))
-        self.assertTrue(isinstance(deserialized_task._notifier, TelegamNotifier))
+        self.assertTrue(isinstance(deserialized_task._notifier, TelegramNotifier))
