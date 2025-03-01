@@ -16,7 +16,6 @@ from argus.tasks.todo import Todo, TodoFormatter, TodoTask
 
 
 class TestDataFetchers(TestCase):
-
     def setUp(self):
         self.test_db = SqliteDatabase(':memory:')
         self.test_db.bind([TaskResult, RunningTask])
@@ -44,7 +43,6 @@ class TestDataFetchers(TestCase):
 
 
 class TestDataSerialization(TestCase):
-
     def test_todo(self) -> None:
         date = datetime.now()
         data = Todo(title='Test Todo', target_date=date)
@@ -52,7 +50,6 @@ class TestDataSerialization(TestCase):
 
 
 class TestTaskSerialization(TestCase):
-
     def test_todo_serialization(self) -> None:
         date = datetime.now()
         task = TodoTask(

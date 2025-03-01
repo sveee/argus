@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from abc import ABC, abstractmethod
-from typing import Generic, List
+from typing import Generic
 
 import requests
 from telegram import Bot
@@ -28,7 +28,7 @@ class Notifier(Serializable):
 class SlackNotifier(Notifier):
     SLACK_MESSAGE_MAX_LENGTH = 4000
 
-    def __init__(self, slack_hooks: List[str]) -> None:
+    def __init__(self, slack_hooks: list[str]) -> None:
         self._slack_hooks = slack_hooks
 
     @staticmethod
@@ -44,7 +44,7 @@ class SlackNotifier(Notifier):
         logger.info('Slack message size: %s', len(text))
         if len(text) >= self.SLACK_MESSAGE_MAX_LENGTH:
             raise ValueError(
-                f"Message exceeds Slack limit of {self.SLACK_MESSAGE_MAX_LENGTH} characters."
+                f'Message exceeds Slack limit of {self.SLACK_MESSAGE_MAX_LENGTH} characters.'
             )
         for slack_hook in self._slack_hooks:
             self.post(text, slack_hook)
@@ -58,7 +58,6 @@ class SlackNotifier(Notifier):
 
 
 class TelegramNotifier(Notifier):
-
     def __init__(self, bot_token: str, chat_ids: list[str]) -> None:
         self._bot_token = bot_token
         self._telegram_bot = Bot(token=bot_token)
@@ -67,9 +66,7 @@ class TelegramNotifier(Notifier):
 
     async def send_messages(self, text: str) -> None:
         for chat_id in self._chat_ids:
-            logger.info(
-                'Telegram message with length %d sent to chat %s', len(text), chat_id
-            )
+            logger.info('Telegram message with length %d sent to chat %s', len(text), chat_id)
             await self._telegram_bot.send_message(
                 chat_id=chat_id, text=text, parse_mode='MarkdownV2'
             )
@@ -89,7 +86,6 @@ class TelegramNotifier(Notifier):
 
 
 class StaticTelegramNotifier(TelegramNotifier):
-
     def __init__(self, text: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._text = text
@@ -104,6 +100,4 @@ class StaticTelegramNotifier(TelegramNotifier):
 
     @classmethod
     def from_dict(cls, data: JsonDict) -> 'StaticTelegramNotifier':
-        return cls(
-            text=data['text'], bot_token=data['bot_token'], chat_ids=data['chat_ids']
-        )
+        return cls(text=data['text'], bot_token=data['bot_token'], chat_ids=data['chat_ids'])

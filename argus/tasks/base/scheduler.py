@@ -76,9 +76,7 @@ class SchedulerConfig:
                 else self.skip_months
             ),
             'skip_days': (
-                [day.value for day in self.skip_days]
-                if self.skip_days
-                else self.skip_days
+                [day.value for day in self.skip_days] if self.skip_days else self.skip_days
             ),
         }
 
@@ -94,9 +92,7 @@ class SchedulerConfig:
                 else data['skip_months']
             ),
             skip_days=(
-                [Day(day) for day in data['skip_days']]
-                if data['skip_days']
-                else data['skip_days']
+                [Day(day) for day in data['skip_days']] if data['skip_days'] else data['skip_days']
             ),
         )
 
@@ -110,8 +106,7 @@ class Scheduler(Serializable):
         self.config = config if config else SchedulerConfig()
         self._delta = FREQ_TO_DELTA[self.config.frequency]
         self._runtimes = sorted(
-            runtime.replace(tzinfo=ZoneInfo(self.config.timezone))
-            for runtime in runtimes
+            runtime.replace(tzinfo=ZoneInfo(self.config.timezone)) for runtime in runtimes
         )
         self.next_runtime: datetime | None = self._runtimes[0]
         if self.config.adjust_to_current_time:
@@ -126,9 +121,7 @@ class Scheduler(Serializable):
             return False
         if self.config.skip_days and Day(runtime.weekday()) in self.config.skip_days:
             return False
-        if self.config.skip_months and Month(runtime.month) in self.config.skip_months:
-            return False
-        return True
+        return not (self.config.skip_months and Month(runtime.month) in self.config.skip_months)
 
     def set_next_runtime(self) -> None:
         if self.next_runtime is None:
@@ -154,11 +147,7 @@ class Scheduler(Serializable):
         return self.next_runtime is not None and self.now() >= self.next_runtime
 
     def __repr__(self) -> str:
-        return (
-            self.next_runtime.strftime('%Y-%m-%d %H:%M:%S')
-            if self.next_runtime
-            else str(None)
-        )
+        return self.next_runtime.strftime('%Y-%m-%d %H:%M:%S') if self.next_runtime else str(None)
 
     def to_dict(self) -> JsonDict:
         return {

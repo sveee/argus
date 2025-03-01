@@ -19,7 +19,6 @@ class Paper:
 
 
 class Papers(list[Paper], Serializable):
-
     def to_dict(self) -> JsonDict:
         return {'papers': [asdict(paper) for paper in self]}
 
@@ -29,7 +28,6 @@ class Papers(list[Paper], Serializable):
 
 
 class TrendingPapersWithCodeTask(Task[Papers]):
-
     LIMIT = 10
 
     def run(self) -> Papers:
@@ -47,9 +45,7 @@ class TrendingPapersWithCodeTask(Task[Papers]):
                         .replace(',', '')
                     ),
                     stars_per_hour=float(
-                        item.find('div', {'class': 'stars-accumulated'})
-                        .text.strip()
-                        .split()[0]
+                        item.find('div', {'class': 'stars-accumulated'}).text.strip().split()[0]
                     ),
                     url='https://paperswithcode.com' + item.find('a')['href'],
                 )

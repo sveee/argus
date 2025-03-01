@@ -19,7 +19,7 @@ class SnowReportData(dict[str, dict[str, float]], Serializable):
         return SnowReportData(data)
 
 
-class SnowForecast(Task):
+class SnowForecastTask(Task):
     def __init__(self, resorts: list[str], levels: list[str], *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.resorts = resorts
@@ -69,8 +69,8 @@ class SnowForecast(Task):
         }
 
     @classmethod
-    def from_dict(cls, data: JsonDict) -> 'SnowForecast':
-        return SnowForecast(
+    def from_dict(cls, data: JsonDict) -> 'SnowForecastTask':
+        return SnowForecastTask(
             resorts=data['resorts'],
             levels=data['levels'],
             **cls.serialize_parameters(data),

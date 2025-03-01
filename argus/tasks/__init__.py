@@ -6,5 +6,17 @@ from argus.tasks.ml.hugging_face import (
     HuggingFaceTrendingPapersTask,
 )
 from argus.tasks.ml.paper_with_code import TrendingPapersWithCodeTask
-from argus.tasks.snow import SnowForecast
+from argus.tasks.snow import SnowForecastTask
 from argus.tasks.todo import TodoTask
+
+__all__ = [
+    'SlackNotifier',
+    'TelegramNotifier',
+    'EPayTask',
+    'TrendingGithubReposTask',
+    'HuggingFaceTrendingModelsTask',
+    'HuggingFaceTrendingPapersTask',
+    'TrendingPapersWithCodeTask',
+    'TodoTask',
+    'SnowForecastTask',
+]

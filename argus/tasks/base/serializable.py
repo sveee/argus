@@ -10,11 +10,10 @@ JsonType = JsonValue | JsonArray | JsonDict
 
 
 class Serializable:
-
     registry: dict[str, type['Serializable']] = {}
 
     def __init_subclass__(cls, **kwargs):
-        '''Auto-register subclasses for correct deserialization.'''
+        """Auto-register subclasses for correct deserialization."""
         super().__init_subclass__(**kwargs)
         cls.registry[cls.__name__] = cls
 

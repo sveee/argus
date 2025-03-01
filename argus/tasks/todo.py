@@ -20,13 +20,10 @@ class Todo(Serializable):
 
     @classmethod
     def from_dict(cls, data: JsonDict) -> 'Todo':
-        return cls(
-            title=data['title'], target_date=datetime.fromisoformat(data['target_date'])
-        )
+        return cls(title=data['title'], target_date=datetime.fromisoformat(data['target_date']))
 
 
 class TodoTask(Task[Todo]):
-
     def __init__(
         self,
         title: str,
@@ -68,9 +65,7 @@ class TodoTask(Task[Todo]):
         return TodoTask(
             title=data['title'],
             target_date=(
-                datetime.fromisoformat(data['target_date'])
-                if data.get('target_date')
-                else None
+                datetime.fromisoformat(data['target_date']) if data.get('target_date') else None
             ),
             **cls.serialize_parameters(data),
         )
@@ -82,6 +77,8 @@ class TodoFormatter(DataFormatter[Todo]):
         when_message = (
             'today'
             if remaining_days == 0
-            else '1 day' if remaining_days == 1 else f'{remaining_days} days'
+            else '1 day'
+            if remaining_days == 1
+            else f'{remaining_days} days'
         )
-        return f'✅ *TODO ({when_message})*\n{data.title}'
+        return f'✅ *TODO \\({when_message}\\)*\n{data.title}'

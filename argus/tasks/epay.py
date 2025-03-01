@@ -46,17 +46,17 @@ class EpayClient:
         }
 
     def __enter__(self):
-        '''Logs in to ePay upon entering the context.'''
+        """Logs in to ePay upon entering the context."""
         if not self.login():
             raise RuntimeError('Failed to log in.')
         return self  # Returns the instance for use within the 'with' block
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        '''Logs out of ePay upon exiting the context.'''
+        """Logs out of ePay upon exiting the context."""
         self.logout()
 
     def get_login_salt(self) -> str:
-        '''Fetches the login salt required for logging in.'''
+        """Fetches the login salt required for logging in."""
         url = f'{self.base_url}/v3main/front'
         response = self.session.get(url, headers=self.headers)
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -65,7 +65,7 @@ class EpayClient:
         return login_salt_input['value']
 
     def login(self) -> bool:
-        '''Logs in to ePay with the provided credentials.'''
+        """Logs in to ePay with the provided credentials."""
         login_salt = self.get_login_salt()
         if not login_salt:
             raise ValueError('Failed to retrieve login salt.')
@@ -82,7 +82,7 @@ class EpayClient:
         return response.ok  # Returns True if login was successful, False otherwise
 
     def get_bills(self, rows: int = 10, page_num: int = 1) -> Bills:
-        '''Fetches a list of bills after successful login.'''
+        """Fetches a list of bills after successful login."""
         bills_url = f'{self.base_url}/v3main/bills/list'
         bills_data = {
             'rows': str(rows),
@@ -121,14 +121,13 @@ class EpayClient:
         return Bills(bills)
 
     def logout(self) -> bool:
-        '''Logs out of the ePay session.'''
+        """Logs out of the ePay session."""
         logout_url = f'{self.base_url}/v3main/logout'
         response = self.session.get(logout_url, headers=self.headers)
         return response.ok  # Returns True if logout was successful
 
 
 class EPayTask(ChangeDetectingTask[Bills]):
-
     def __init__(self, username: str, password: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._username = username
@@ -160,11 +159,7 @@ def _format_data_to_markdown(data: Bills) -> str:
     df = pd.concat(
         [df, pd.DataFrame([{'name': 'Total', 'id': '', 'amount': df.amount.sum()}])]
     ).reset_index(drop=True)
-    return (
-        '💸 *Bills* 💸\n```\n'
-        + escape_markdown(dataframe_to_str(df), version=2)
-        + '\n```'
-    )
+    return '💸 *Bills* 💸\n```\n' + escape_markdown(dataframe_to_str(df), version=2) + '\n```'
 
 
 class EPayMarkdownFormatter(DataFormatter[Bills]):

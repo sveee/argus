@@ -133,5 +133,5 @@ class TestScheduler(unittest.TestCase):
         self.assertEqual(scheduler.config, deserialized_scheduler.config)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()
