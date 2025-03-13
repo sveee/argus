@@ -18,6 +18,11 @@ class DataFormatter(Serializable, ABC, Generic[T]):
         pass
 
 
+class SimpleFormatter(DataFormatter[T]):
+    def format(self, data: T) -> str:
+        return str(data)
+
+
 class Notifier(Serializable):
     @abstractmethod
     def notify(self, text: str) -> None:

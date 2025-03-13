@@ -22,7 +22,7 @@ class BillEntry:
 
 class Bills(list[BillEntry], Serializable):
     def to_dict(self) -> JsonDict:
-        return {'bills': [asdict(entry) for entry in self]}
+        return super().to_dict() | {'bills': [asdict(entry) for entry in self]}
 
     @classmethod
     def from_dict(cls, data: JsonDict) -> 'Bills':
@@ -30,7 +30,7 @@ class Bills(list[BillEntry], Serializable):
 
 
 class EpayClient:
-    def __init__(self, username: str, password: str):
+    def __init__(self, username: str, password: str) -> None:
         self.session = requests.Session()
         self.username = username
         self.password = password
@@ -51,7 +51,7 @@ class EpayClient:
             raise RuntimeError('Failed to log in.')
         return self  # Returns the instance for use within the 'with' block
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """Logs out of ePay upon exiting the context."""
         self.logout()
 
@@ -114,7 +114,7 @@ class EpayClient:
             bills.append(
                 BillEntry(
                     name=bill_entry['REG_DESCR'],
-                    id=bill_entry['IDN'][-8:],
+                    id=bill_entry['IDN'],
                     amount=amount,
                 )
             )
@@ -128,7 +128,7 @@ class EpayClient:
 
 
 class EPayTask(ChangeDetectingTask[Bills]):
-    def __init__(self, username: str, password: str, *args, **kwargs):
+    def __init__(self, username: str, password: str, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._username = username
         self._password = password
@@ -153,15 +153,13 @@ class EPayTask(ChangeDetectingTask[Bills]):
         )
 
 
-def _format_data_to_markdown(data: Bills) -> str:
-    df = pd.DataFrame(data.to_dict()['bills'])
-    df = df.sort_values('name')
-    df = pd.concat(
-        [df, pd.DataFrame([{'name': 'Total', 'id': '', 'amount': df.amount.sum()}])]
-    ).reset_index(drop=True)
-    return '💸 *Bills* 💸\n```\n' + escape_markdown(dataframe_to_str(df), version=2) + '\n```'
-
-
 class EPayMarkdownFormatter(DataFormatter[Bills]):
     def format(self, data: Bills) -> str:
-        return _format_data_to_markdown(data)
+        df = pd.DataFrame(data.to_dict()['bills'], columns=['name', 'id', 'amount'])
+        df = df[df.amount > 0]
+        df = df.sort_values('name')
+        df['id'] = df['id'].str[-8:]
+        df = pd.concat(
+            [df, pd.DataFrame([{'name': 'Total', 'id': '', 'amount': df.amount.sum()}])]
+        ).reset_index(drop=True)
+        return '💸 *Bills* 💸\n```\n' + escape_markdown(dataframe_to_str(df), version=2) + '\n```'

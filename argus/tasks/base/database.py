@@ -20,6 +20,7 @@ class TaskResult(Model):
 
 class RunningTask(Model):
     task_id = CharField(unique=True)
+    task_type = CharField()
     serialized_data = TextField()
     last_updated = DateTimeField(default=get_current_utc_time)
 

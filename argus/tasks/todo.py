@@ -81,4 +81,4 @@ class TodoFormatter(DataFormatter[Todo]):
             if remaining_days == 1
             else f'{remaining_days} days'
         )
-        return f'✅ *TODO \\({when_message}\\)*\n{data.title}'
+        return f'*TODO \\({when_message}\\)*\n{data.title}'

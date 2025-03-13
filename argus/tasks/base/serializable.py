@@ -10,12 +10,12 @@ JsonType = JsonValue | JsonArray | JsonDict
 
 
 class Serializable:
-    registry: dict[str, type['Serializable']] = {}
+    cls_registry: dict[str, type['Serializable']] = {}
 
     def __init_subclass__(cls, **kwargs):
         """Auto-register subclasses for correct deserialization."""
         super().__init_subclass__(**kwargs)
-        cls.registry[cls.__name__] = cls
+        cls.cls_registry[cls.__name__] = cls
 
     def to_dict(self) -> JsonDict:
         return {'__class__': self.__class__.__name__}
@@ -29,7 +29,7 @@ class Serializable:
         class_name = data.pop('__class__', None)
         if class_name is None:
             return cls(**cls.serialize_parameters(data))
-        subclass = cls.registry.get(class_name)
+        subclass = cls.cls_registry.get(class_name)
         if subclass is None:
             raise ValueError(f'Unknown class: {class_name}')
         subclass_type = cast(type[T], subclass)

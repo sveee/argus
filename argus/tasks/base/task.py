@@ -8,7 +8,7 @@ from typing import Generic
 from argus.tasks.base.database import RunningTask, TaskResult
 from argus.tasks.base.notifier import DataFormatter, Notifier
 from argus.tasks.base.scheduler import Scheduler
-from argus.tasks.base.serializable import JsonDict, Serializable, T
+from argus.tasks.base.serializable import JsonDict, Serializable, T, cast
 
 logger = logging.getLogger(__name__)
 
@@ -45,22 +45,33 @@ class Task(Serializable, ABC, Generic[T]):
         serialized_result = json.dumps(result.to_dict())
         TaskResult.create(task_id=self.task_id, result=serialized_result)
 
+    def get_last_result(self) -> T | None:
+        """Retrieve a result in the database."""
+        entry = (
+            TaskResult.select()
+            .where(TaskResult.task_id == self.task_id)
+            .order_by(TaskResult.created_at.desc())
+            .first()
+        )
+        return cast(T, Serializable.from_dict(json.loads(entry.result))) if entry else None
+
     def notify_result(self, result: T) -> None:
         """Notifies using the notifier if available."""
         if self._notifier and self._formatter:
             self._notifier.notify(self._formatter.format(result))
 
-    def on_run_completed(self, result: T) -> None:
-        """Handles result storage and notifications."""
-        self.save_result(result)
-        self.notify_result(result)
+    def _should_notify(self, result: T) -> bool:
+        return True
 
     def run_if_due(self) -> None:
         """Runs the task if it is due, handles scheduling, storing, and notifying."""
         if not self._scheduler or self._scheduler.is_due():
             logger.info('%s running', self.task_id)
             result = self.run()
-            self.on_run_completed(result)
+            should_notify = self._should_notify(result)
+            self.save_result(result)
+            if should_notify:
+                self.notify_result(result)
             if self._scheduler:
                 self._scheduler.set_next_runtime()
             logger.info('%s finished. Next run time: %s', self.task_id, self._scheduler)
@@ -90,28 +101,8 @@ class Task(Serializable, ABC, Generic[T]):
 
 
 class ChangeDetectingTask(Task[T], ABC):
-    def get_previous_result_json(self) -> JsonDict | None:
-        """Fetches the previous result from the database."""
-        previous_entry = (
-            TaskResult.select()
-            .where(TaskResult.task_id == self.task_id)
-            .order_by(TaskResult.created_at.desc())
-            .get_or_none()
-        )
-        return json.loads(previous_entry.result) if previous_entry else None
-
-    def has_changes(self, current_result: T) -> bool:
-        """Compares the current result with the previous result."""
-        previous_result_json = self.get_previous_result_json()
-        return previous_result_json != current_result.to_dict()
-
-    def on_run_completed(self, result: T) -> None:
-        """Saves and notifies only if changes are detected."""
-        if self.has_changes(result):
-            logger.info('%s detected changes and saved results', self.task_id)
-            super().on_run_completed(result)
-        else:
-            logger.info('%s no changes detected', self.task_id)
+    def _should_notify(self, result: T) -> bool:
+        return result != self.get_last_result()
 
 
 class TaskManager:
