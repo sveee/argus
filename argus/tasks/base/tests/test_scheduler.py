@@ -3,8 +3,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from argus.tasks.base.scheduler import (
-    WEEKEND,
-    Day,
+    WEEKDAYS,
     Frequency,
     Month,
     Scheduler,
@@ -31,7 +30,7 @@ class TestScheduler(unittest.TestCase):
     def test_daily_frequency_skip_weekend(self):
         config = SchedulerConfig(
             frequency=Frequency.DAILY,
-            skip_days=WEEKEND,
+            days_only=WEEKDAYS,
             adjust_to_current_time=False,
         )
         scheduler = Scheduler(
@@ -49,7 +48,7 @@ class TestScheduler(unittest.TestCase):
             runtimes=[self.now],
             config=SchedulerConfig(
                 frequency=Frequency.MONTHLY,
-                skip_months=[Month.FEBRUARY, Month.MARCH],
+                months_only=[Month.APRIL],
                 adjust_to_current_time=False,
             ),
         )
@@ -113,7 +112,7 @@ class TestScheduler(unittest.TestCase):
             [self.now],
             SchedulerConfig(
                 frequency=Frequency.DAILY,
-                skip_days=list(Day),
+                days_only=[],
                 adjust_to_current_time=False,
             ),
         )

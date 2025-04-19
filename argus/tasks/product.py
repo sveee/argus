@@ -69,12 +69,8 @@ class PriceDiscountsTask(Task[ProductPrices]):
         for url, new_product in new_products_by_url.items():
             old_product = old_products_by_url.get(url)
             discount = (
-                (
-                    (old_product.price - new_product.price) / old_product.price
-                    if old_product.price
-                    else 0
-                )
-                if old_product
+                (old_product.price - new_product.price) / old_product.price
+                if old_product and old_product.price
                 else 0
             )
             discounted_products.append(

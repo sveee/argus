@@ -54,6 +54,7 @@ class Month(Enum):
     DECEMBER = 12
 
 
+WEEKDAYS = [Day.MONDAY, Day.TUESDAY, Day.WEDNESDAY, Day.THURSDAY, Day.FRIDAY]
 WEEKEND = [Day.SATURDAY, Day.SUNDAY]
 
 
@@ -62,21 +63,21 @@ class SchedulerConfig:
     frequency: Frequency = Frequency.LIST
     timezone: str = 'Europe/Sofia'
     adjust_to_current_time: bool = True
-    skip_months: list[Month] | None = None
-    skip_days: list[Day] | None = None
+    months_only: list[Month] | None = None
+    days_only: list[Day] | None = None
 
     def to_dict(self) -> JsonDict:
         return {
             'frequency': self.frequency.value,
             'timezone': self.timezone,
             'adjust_to_current_time': self.adjust_to_current_time,
-            'skip_months': (
-                [month.value for month in self.skip_months]
-                if self.skip_months
-                else self.skip_months
+            'months_only': (
+                [month.value for month in self.months_only]
+                if self.months_only
+                else self.months_only
             ),
-            'skip_days': (
-                [day.value for day in self.skip_days] if self.skip_days else self.skip_days
+            'days_only': (
+                [day.value for day in self.days_only] if self.days_only else self.days_only
             ),
         }
 
@@ -86,13 +87,13 @@ class SchedulerConfig:
             frequency=Frequency(data['frequency']),
             timezone=data['timezone'],
             adjust_to_current_time=data['adjust_to_current_time'],
-            skip_months=(
-                [Month(month) for month in data['skip_months']]
-                if data['skip_months']
-                else data['skip_months']
+            months_only=(
+                [Month(month) for month in data['months_only']]
+                if data['months_only']
+                else data['months_only']
             ),
-            skip_days=(
-                [Day(day) for day in data['skip_days']] if data['skip_days'] else data['skip_days']
+            days_only=(
+                [Day(day) for day in data['days_only']] if data['days_only'] else data['days_only']
             ),
         )
 
@@ -119,9 +120,15 @@ class Scheduler(Serializable):
     def _is_valid_runtime(self, runtime: datetime | None) -> bool:
         if runtime is None:
             return False
-        if self.config.skip_days and Day(runtime.weekday()) in self.config.skip_days:
+        if (
+            self.config.days_only is not None
+            and Day(runtime.weekday()) not in self.config.days_only
+        ):
             return False
-        return not (self.config.skip_months and Month(runtime.month) in self.config.skip_months)
+        return not (
+            self.config.months_only is not None
+            and Month(runtime.month) not in self.config.months_only
+        )
 
     def set_next_runtime(self) -> None:
         if self.next_runtime is None:

@@ -28,7 +28,7 @@ def get_huggingface_models():
 
 
 def get_huggingface_papers():
-    papers = get_task_latest_result('weekly_huggingface_papars')
+    papers = get_task_latest_result('weekly_huggingface_papers')
     papers_df = pd.DataFrame(papers['papers'])
     papers_df = papers_df[['title', 'n_likes', 'url']]
     papers_df = papers_df.sort_values('n_likes', ascending=False).head(10)
