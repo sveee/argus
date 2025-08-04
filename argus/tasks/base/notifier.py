@@ -71,7 +71,9 @@ class TelegramNotifier(Notifier):
 
     async def send_messages(self, text: str) -> None:
         for chat_id in self._chat_ids:
-            logger.info('Telegram message with length %d sent to chat %s', len(text), chat_id)
+            logger.info(
+                'Telegram message with length %d sent to chat %s', len(text), chat_id
+            )
             await self._telegram_bot.send_message(
                 chat_id=chat_id, text=text, parse_mode='MarkdownV2'
             )
@@ -105,4 +107,6 @@ class StaticTelegramNotifier(TelegramNotifier):
 
     @classmethod
     def from_dict(cls, data: JsonDict) -> 'StaticTelegramNotifier':
-        return cls(text=data['text'], bot_token=data['bot_token'], chat_ids=data['chat_ids'])
+        return cls(
+            text=data['text'], bot_token=data['bot_token'], chat_ids=data['chat_ids']
+        )

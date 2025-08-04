@@ -94,7 +94,9 @@ class HuggingFaceTrendingPapersTask(Task[Papers]):
                 a = parent.find('a', {'class': 'cursor-pointer'})
                 n_likes = parent.find('div', {'class': 'leading-none'}).text.strip()
                 n_likes = int(n_likes) if n_likes.isdigit() else 0
-                papers.append(Paper(url=a['href'], title=a.text.strip(), n_likes=n_likes))
+                papers.append(
+                    Paper(url=a['href'], title=a.text.strip(), n_likes=n_likes)
+                )
 
         return Papers(sorted(set(papers)))
 

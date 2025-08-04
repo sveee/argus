@@ -28,7 +28,9 @@ class Task(Serializable, ABC, Generic[T]):
         self._scheduler = scheduler if scheduler else None
         self._formatter = formatter
         self._notifier = notifier
-        self.task_id = task_id if task_id is not None else self.generate_unique_task_name()
+        self.task_id = (
+            task_id if task_id is not None else self.generate_unique_task_name()
+        )
 
     @classmethod
     def generate_unique_task_name(cls) -> str:
@@ -53,7 +55,9 @@ class Task(Serializable, ABC, Generic[T]):
             .order_by(TaskResult.created_at.desc())
             .first()
         )
-        return cast(T, Serializable.from_dict(json.loads(entry.result))) if entry else None
+        return (
+            cast(T, Serializable.from_dict(json.loads(entry.result))) if entry else None
+        )
 
     def notify_result(self, result: T) -> None:
         """Notifies using the notifier if available."""
@@ -80,11 +84,17 @@ class Task(Serializable, ABC, Generic[T]):
     def serialize_parameters(data: JsonDict) -> JsonDict:
         return {
             'task_id': data['task_id'],
-            'scheduler': (Scheduler.from_dict(data['scheduler']) if data['scheduler'] else None),
-            'formatter': (
-                DataFormatter.from_dict(data['formatter']) if data['formatter'] else None
+            'scheduler': (
+                Scheduler.from_dict(data['scheduler']) if data['scheduler'] else None
             ),
-            'notifier': (Notifier.from_dict(data['notifier']) if data['notifier'] else None),
+            'formatter': (
+                DataFormatter.from_dict(data['formatter'])
+                if data['formatter']
+                else None
+            ),
+            'notifier': (
+                Notifier.from_dict(data['notifier']) if data['notifier'] else None
+            ),
         }
 
     def to_dict(self) -> JsonDict:
@@ -136,7 +146,9 @@ class TaskManager:
     def _load_running_tasks(self) -> None:
         """Fetch and deserialize active tasks from the database."""
         tasks = list(RunningTask.select().order_by())
-        self._tasks = [Task.from_dict(json.loads(task.serialized_data)) for task in tasks]
+        self._tasks = [
+            Task.from_dict(json.loads(task.serialized_data)) for task in tasks
+        ]
         logger.info('New tasks: %s', self._tasks)
 
     def run(self):

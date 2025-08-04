@@ -36,13 +36,6 @@ def get_huggingface_papers():
     return papers_df
 
 
-def get_papers_with_code():
-    papers = get_task_latest_result('weekly_papers_with_code')
-    papers_df = pd.DataFrame(papers['papers'])
-    papers_df = papers_df.sort_values('stars_per_hour', ascending=False).head(10)
-    return papers_df
-
-
 def get_repos():
     repos = get_task_latest_result('weekly_github_ml_repos')
     repos_df = pd.DataFrame(repos['repos'])
@@ -69,7 +62,6 @@ def ml_dashboard():
         'ml.html',
         hf_papers=get_huggingface_papers(),
         hf_models=get_huggingface_models(),
-        papers_with_code=get_papers_with_code(),
         gh_repos=get_repos(),
         date=get_date(),
     )

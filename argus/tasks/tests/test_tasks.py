@@ -64,7 +64,10 @@ class TestDataFetchers(TestCase):
         mock_client.get_bills.return_value = Bills(bills)
         notifier = _MockNotifier()
         task = EPayTask(
-            username='user', password='pass', notifier=notifier, formatter=SimpleFormatter()
+            username='user',
+            password='pass',
+            notifier=notifier,
+            formatter=SimpleFormatter(),
         )
         task.run_if_due()
         self.assertTrue(notifier.notified)
@@ -84,7 +87,8 @@ class TestDataFetchers(TestCase):
 
     def test_product_discounts(self) -> None:
         task = PriceDiscountsTask(
-            task_id='price_discounts_test', fetchers=[MockPriceFetcher('www.example.com', 1)]
+            task_id='price_discounts_test',
+            fetchers=[MockPriceFetcher('www.example.com', 1)],
         )
         task.run_if_due()
         task.fetchers = [MockPriceFetcher('www.example.com', 0.25)]

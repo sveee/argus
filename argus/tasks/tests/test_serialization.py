@@ -27,7 +27,11 @@ class TestDataSerialization(TestCase):
         data = ProductPrices(
             [
                 ProductPrice(
-                    name='test', price=1.23, url='www.example.com', discount=0.1, vendor='vendor'
+                    name='test',
+                    price=1.23,
+                    url='www.example.com',
+                    discount=0.1,
+                    vendor='vendor',
                 )
             ]
         )

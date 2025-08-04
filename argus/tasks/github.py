@@ -69,7 +69,9 @@ class TrendingGithubReposTask(Task[Repos]):
             name_element = article.find('span', {'class': 'text-normal'}).parent
             description_element = article.find('p')
             description = description_element.text if description_element else ''
-            n_stars_element, recent_stars_element = article.find_all('a', {'class': 'Link--muted'})
+            n_stars_element, recent_stars_element = article.find_all(
+                'a', {'class': 'Link--muted'}
+            )
             n_stars = n_stars_element.text.strip().replace(',', '')
             n_recent_stars = recent_stars_element.text.strip().replace(',', '')
             language_element = article.find('span', {'itemprop': 'programmingLanguage'})

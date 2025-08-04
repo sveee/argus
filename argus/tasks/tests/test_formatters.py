@@ -12,5 +12,7 @@ class TestFormatter(TestCase):
     def test_product_discount(self):
         formatter = PriceDiscountsFormatter()
         formatter.format(
-            ProductPrices([ProductPrice('test', 0, 'www.example.com', 'vendor', discount=0)])
+            ProductPrices(
+                [ProductPrice('test', 0, 'www.example.com', 'vendor', discount=0)]
+            )
         )

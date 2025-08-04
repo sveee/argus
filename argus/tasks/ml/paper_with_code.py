@@ -45,7 +45,9 @@ class TrendingPapersWithCodeTask(Task[Papers]):
                         .replace(',', '')
                     ),
                     stars_per_hour=float(
-                        item.find('div', {'class': 'stars-accumulated'}).text.strip().split()[0]
+                        item.find('div', {'class': 'stars-accumulated'})
+                        .text.strip()
+                        .split()[0]
                     ),
                     url='https://paperswithcode.com' + item.find('a')['href'],
                 )

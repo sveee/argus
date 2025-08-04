@@ -77,7 +77,9 @@ class SchedulerConfig:
                 else self.months_only
             ),
             'days_only': (
-                [day.value for day in self.days_only] if self.days_only else self.days_only
+                [day.value for day in self.days_only]
+                if self.days_only
+                else self.days_only
             ),
         }
 
@@ -93,7 +95,9 @@ class SchedulerConfig:
                 else data['months_only']
             ),
             days_only=(
-                [Day(day) for day in data['days_only']] if data['days_only'] else data['days_only']
+                [Day(day) for day in data['days_only']]
+                if data['days_only']
+                else data['days_only']
             ),
         )
 
@@ -107,7 +111,8 @@ class Scheduler(Serializable):
         self.config = config if config else SchedulerConfig()
         self._delta = FREQ_TO_DELTA[self.config.frequency]
         self._runtimes = sorted(
-            runtime.replace(tzinfo=ZoneInfo(self.config.timezone)) for runtime in runtimes
+            runtime.replace(tzinfo=ZoneInfo(self.config.timezone))
+            for runtime in runtimes
         )
         self.next_runtime: datetime | None = self._runtimes[0]
         if self.config.adjust_to_current_time:
@@ -154,7 +159,11 @@ class Scheduler(Serializable):
         return self.next_runtime is not None and self.now() >= self.next_runtime
 
     def __repr__(self) -> str:
-        return self.next_runtime.strftime('%Y-%m-%d %H:%M:%S') if self.next_runtime else str(None)
+        return (
+            self.next_runtime.strftime('%Y-%m-%d %H:%M:%S')
+            if self.next_runtime
+            else str(None)
+        )
 
     def to_dict(self) -> JsonDict:
         return {

@@ -41,11 +41,15 @@ class PriceFetcher(ABC, Serializable):
 
 class ProductPrices(list[ProductPrice], Serializable):
     def to_dict(self) -> JsonDict:
-        return super().to_dict() | {'discounts': [asdict(discount) for discount in self]}
+        return super().to_dict() | {
+            'discounts': [asdict(discount) for discount in self]
+        }
 
     @classmethod
     def from_dict(cls, data: JsonDict) -> 'ProductPrices':
-        return ProductPrices([ProductPrice(**discount) for discount in data['discounts']])
+        return ProductPrices(
+            [ProductPrice(**discount) for discount in data['discounts']]
+        )
 
 
 class PriceDiscountsTask(Task[ProductPrices]):
@@ -85,7 +89,9 @@ class PriceDiscountsTask(Task[ProductPrices]):
         return ProductPrices(discounted_products)
 
     def to_dict(self) -> JsonDict:
-        return super().to_dict() | {'fetchers': [fetcher.to_dict() for fetcher in self.fetchers]}
+        return super().to_dict() | {
+            'fetchers': [fetcher.to_dict() for fetcher in self.fetchers]
+        }
 
     @classmethod
     def from_dict(cls, data: JsonDict) -> 'PriceDiscountsTask':
@@ -102,7 +108,11 @@ class LillyPriceFetcher(PriceFetcher):
         logger.info('Fetching %s', self.url)
         response = requests.get(self.url)
         soup = BeautifulSoup(response.text, features='lxml')
-        price_text = soup.find('div', {'class': 'price-box'}).find('span', {'class': 'price'}).text
+        price_text = (
+            soup.find('div', {'class': 'price-box'})
+            .find('span', {'class': 'price'})
+            .text
+        )
         re_result = re.search('\d+,\d+', price_text)
         assert re_result, self.url
         price = float(re_result.group(0).replace(',', '.'))
@@ -123,5 +133,7 @@ class PriceDiscountsFormatter(DataFormatter[ProductPrices]):
         df = df[df.discount > 0]
         df = df.sort_values('name')
         return (
-            '💸 *Discounts* 💸\n```\n' + escape_markdown(dataframe_to_str(df), version=2) + '\n```'
+            '💸 *Discounts* 💸\n```\n'
+            + escape_markdown(dataframe_to_str(df), version=2)
+            + '\n```'
         )

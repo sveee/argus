@@ -162,4 +162,8 @@ class EPayMarkdownFormatter(DataFormatter[Bills]):
         df = pd.concat(
             [df, pd.DataFrame([{'name': 'Total', 'id': '', 'amount': df.amount.sum()}])]
         ).reset_index(drop=True)
-        return '💸 *Bills* 💸\n```\n' + escape_markdown(dataframe_to_str(df), version=2) + '\n```'
+        return (
+            '💸 *Bills* 💸\n```\n'
+            + escape_markdown(dataframe_to_str(df), version=2)
+            + '\n```'
+        )
