@@ -1,52 +1,30 @@
-[tool.poetry]
+[project]
 name = "argus"
 version = "0.1.0"
-description = ""
-authors = ["sve"]
+description = "Add your description here"
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.11"
-peewee = "^3.17.6"
-requests = "^2.32.3"
-mypy = "^1.11.2"
-isort = "^5.13.2"
-black = "^24.8.0"
-types-peewee = "^3.17.6.20240813"
-types-requests = "^2.32.0.20240914"
-pylint = "^3.2.7"
-beautifulsoup4 = "^4.12.3"
-streamlit = "^1.39.0"
-pytest = "^8.3.3"
-tabulate = "^0.9.0"
-lxml = "^5.3.0"
-python-telegram-bot = "^21.6"
-flask = "^3.1.0"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.ruff]
-line-length = 100
+requires-python = ">=3.12.10"
+dependencies = [
+    "beautifulsoup4>=4.13.4",
+    "flask>=3.1.1",
+    "lxml>=6.0.0",
+    "peewee>=3.18.2",
+    "pytest>=8.4.1",
+    "python-telegram-bot>=22.3",
+    "requests>=2.32.4",
+    "streamlit>=1.47.1",
+    "tabulate>=0.9.0",
+]
 
 [tool.ruff.format]
 quote-style = "single"
+indent-style = "space"
+docstring-code-format = true
 
-[tool.ruff.lint]
-select = [
-    # pycodestyle
-    "E",
-    # Pyflakes
-    "F",
-    # pyupgrade
-    "UP",
-    # flake8-bugbear
-    "B",
-    # flake8-simplify
-    "SIM",
-    # isort
-    "I",
-    # flake8-annotations
-    # "ANN",
+[tool.setuptools]
+py-modules = ["argus"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.1",
 ]

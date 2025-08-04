@@ -1,20 +1,24 @@
-FROM python:3.11-slim
+# Use an official base image with Python 3.12.10
+FROM python:3.12.10-slim
 
-ENV POETRY_VERSION=1.8.2 \
-    POETRY_HOME="/opt/poetry" \
-    PATH="/opt/poetry/bin:$PATH" \
-    POETRY_NO_INTERACTION=1
+# Install required system packages
+RUN apt-get update && apt-get install -y \
+    curl \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && \
-    apt-get install -y curl build-essential && \
-    curl -sSL https://install.python-poetry.org | python3 - && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Install uv (Python packaging tool) and add it to PATH
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:$PATH"
 
-# Use a clean internal work directory
+# Set working directory
 WORKDIR /app
 
-# Copy only pyproject.toml for installation
-COPY . .
+# Copy project files
+COPY . /app
 
-RUN poetry install
+# Create venv and install in editable mode
+RUN uv pip install -e . --system
+
+# Default command
+CMD ["python"]
